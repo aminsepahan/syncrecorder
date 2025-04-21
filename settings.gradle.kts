@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Sync Recorder"
 include(":app")
+include(":common")
