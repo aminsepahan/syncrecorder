@@ -1,4 +1,4 @@
- package com.appleader707.syncrecorder
+package com.appleader707.syncrecorder.presentation.ui.main
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -11,7 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.appleader707.syncrecorder.ui.theme.SyncRecorderTheme
+import com.appleader707.syncrecorder.presentation.theme.SyncRecorderTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

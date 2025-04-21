@@ -2,6 +2,10 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.devtools.ksp)
+    id("kotlinx-serialization")
+    id("dagger.hilt.android.plugin")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -18,6 +22,16 @@ android {
 
     buildTypes {
         release {
+            isShrinkResources = true
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+
+        debug {
+            isShrinkResources = false
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -38,11 +52,62 @@ android {
 }
 
 dependencies {
+    //==================== Modules ====================
+    implementation(project(":common"))
+
+    //==================== Compiler ====================
+    implementation(libs.androidx.compiler)
+
+    //==================== Core ====================
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+
+    //==================== Compose Libraries ====================
     implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.navigation.compose)
+    // Material design icons
+    implementation(libs.androidx.material)
+    implementation(libs.androidx.material.icons.extended)
+
+    //==================== Lifecycle ====================
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+
+    //==================== Ui Material 3 ====================
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+
+    //==================== Hilt ====================
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)   // Hilt compiler
+    implementation(libs.androidx.hilt.work)
+    implementation(libs.androidx.work.runtime.ktx)
+    ksp(libs.androidx.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    //==================== Timber ====================
+    implementation(libs.timber)
+
+    //==================== Accompanist ====================
+    implementation(libs.accompanist.permissions)
+
+    //==================== Datastore ====================
+    implementation(libs.androidx.datastore.preferences)
+
+    //==================== CameraX ====================
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.video)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.extensions)
+
+    //==================== Media 3 Exoplayer ====================
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.exoplayer.hls)
+    implementation(libs.androidx.media3.ui)
 }

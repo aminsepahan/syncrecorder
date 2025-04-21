@@ -1,6 +1,5 @@
-package com.appleader707.syncrecorder.ui.theme
+package com.appleader707.syncrecorder.presentation.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

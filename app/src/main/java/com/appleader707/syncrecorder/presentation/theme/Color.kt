@@ -1,4 +1,4 @@
-package com.appleader707.syncrecorder.ui.theme
+package com.appleader707.syncrecorder.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 
