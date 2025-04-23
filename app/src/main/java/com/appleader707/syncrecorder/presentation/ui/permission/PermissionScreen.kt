@@ -63,7 +63,7 @@ fun PermissionLayout(
 ) {
     val permissionsState = rememberMultiplePermissionsState(viewState.permissions)
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(permissionsState.allPermissionsGranted) {
         if (permissionsState.allPermissionsGranted) {
             onEventHandler.invoke(PermissionViewEvent.GoRecordingPage)
         }
