@@ -106,8 +106,6 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.camera.extensions)
 
-    //==================== Media 3 Exoplayer ====================
-    implementation(libs.androidx.media3.exoplayer)
-    implementation(libs.androidx.media3.exoplayer.hls)
-    implementation(libs.androidx.media3.ui)
+    //==================== FFmpeg ====================
+    implementation(libs.ffmpeg.kit.full.gpl)
 }

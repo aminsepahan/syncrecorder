@@ -2,10 +2,34 @@ package com.appleader707.syncrecorder.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Primary colors
+val TealPrimary = Color(0xFF00BFA5)
+val TealPrimaryDark = Color(0xFF64FFDA)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Secondary
+val TealSecondary = Color(0xFF00897B)
+val TealSecondaryDark = Color(0xFF00BFA5)
+
+// Backgrounds
+val LightBackground = Color(0xFFFFFFFF)
+val DarkBackground = Color(0xFF121212)
+
+// On Background
+val LightOnBackground = Color(0xFF212121)
+val DarkOnBackground = Color(0xFFE0E0E0)
+
+// Surface
+val LightSurface = Color(0xFFF5F5F5)
+val DarkSurface = Color(0xFF1E1E1E)
+
+// On Surface
+val OnSurfaceLight = Color(0xFF212121)
+val OnSurfaceDark = Color(0xFFFAFAFA)
+
+// Error
+val ErrorLight = Color(0xFFB00020)
+val ErrorDark = Color(0xFFCF6679)
+
+// On Error
+val OnErrorLight = Color(0xFFFFFFFF)
+val OnErrorDark = Color(0xFF000000)

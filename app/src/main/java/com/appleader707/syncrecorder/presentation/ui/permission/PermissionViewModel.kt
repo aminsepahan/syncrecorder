@@ -25,7 +25,9 @@ class PermissionViewModel @Inject constructor(
 
     override fun processEvent(event: PermissionViewEvent) {
         when (event) {
-            else -> {}
+            PermissionViewEvent.GoRecordingPage -> {
+                effect.postValue(PermissionViewEffect.GoRecordingPage)
+            }
         }
     }
 

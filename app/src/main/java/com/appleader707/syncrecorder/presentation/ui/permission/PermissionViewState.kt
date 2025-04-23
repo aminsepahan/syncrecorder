@@ -8,5 +8,11 @@ import com.appleader707.common.ui.base.BaseViewState
  */
 
 data class PermissionViewState(
-    val test: String = ""
+    val permissions: List<String> = listOf(
+        android.Manifest.permission.CAMERA,
+        android.Manifest.permission.RECORD_AUDIO,
+        android.Manifest.permission.BODY_SENSORS,
+        android.Manifest.permission.READ_EXTERNAL_STORAGE,
+        android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+    )
 ) : BaseViewState

@@ -8,4 +8,5 @@ import com.appleader707.common.ui.base.BaseViewEvent
  */
 
 sealed class PermissionViewEvent : BaseViewEvent {
+    data object GoRecordingPage: PermissionViewEvent()
 }
