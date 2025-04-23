@@ -1,47 +1,35 @@
 package com.appleader707.syncrecorder.presentation.ui.main
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.appleader707.syncrecorder.core.HComponentActivity
+import com.appleader707.syncrecorder.extension.Helper
 import com.appleader707.syncrecorder.presentation.theme.SyncRecorderTheme
+import dagger.hilt.android.AndroidEntryPoint
+import com.appleader707.syncrecorder.R
 
-class MainActivity : ComponentActivity() {
+@AndroidEntryPoint
+class MainActivity : HComponentActivity() {
+
+    private var backPressed = 0L
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             SyncRecorderTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                MainScreen(finish = finish)
             }
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    SyncRecorderTheme {
-        Greeting("Android")
+    private val finish: () -> Unit = {
+        if (backPressed + 2000 > System.currentTimeMillis()) {
+            finishAndRemoveTask()
+        } else {
+            Helper.showMessage(getString(R.string.back_exit_app))
+        }
+        backPressed = System.currentTimeMillis()
     }
 }
