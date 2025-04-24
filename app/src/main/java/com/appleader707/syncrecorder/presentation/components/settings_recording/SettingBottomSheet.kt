@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,11 +33,11 @@ fun SettingsBottomSheet(
     onSave: (RecordingSettingsState) -> Unit
 ) {
     var resolution by remember { mutableStateOf(initialSettings.resolution) }
-    var frameRate by remember { mutableStateOf(initialSettings.frameRate) }
+    var frameRate by remember { mutableIntStateOf(initialSettings.frameRate) }
     var autoFocus by remember { mutableStateOf(initialSettings.autoFocus) }
     var stabilization by remember { mutableStateOf(initialSettings.stabilization) }
     var audioSource by remember { mutableStateOf(initialSettings.audioSource) }
-    var imuFrequency by remember { mutableStateOf(initialSettings.imuFrequency) }
+    var imuFrequency by remember { mutableIntStateOf(initialSettings.imuFrequency) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -47,16 +48,26 @@ fun SettingsBottomSheet(
             Spacer(Modifier.height(16.dp))
 
             // Resolution Dropdown
-            DropdownSelector("Resolution", listOf("480p" ,"720p", "1080p", "4K"), resolution) { resolution = it }
+            DropdownSelector(
+                "Resolution",
+                listOf("480p", "720p", "1080p", "4K"),
+                resolution
+            ) { resolution = it }
 
             // Frame Rate
             DropdownSelector("Frame Rate", listOf(24, 30, 60), frameRate) { frameRate = it }
 
             // Audio Source
-            DropdownSelector("Audio Source", listOf("MIC", "CAMCORDER", "VOICE_RECOGNITION"), audioSource) { audioSource = it }
+            DropdownSelector(
+                "Audio Source",
+                listOf("MIC", "CAMCORDER", "VOICE_RECOGNITION"),
+                audioSource
+            ) { audioSource = it }
 
             // IMU Frequency
-            DropdownSelector("IMU Frequency", listOf(10, 50, 100), imuFrequency) { imuFrequency = it }
+            DropdownSelector("IMU Frequency", listOf(10, 50, 100), imuFrequency) {
+                imuFrequency = it
+            }
 
             Row(
                 Modifier.fillMaxWidth(),
@@ -79,13 +90,13 @@ fun SettingsBottomSheet(
                 onClick = {
                     onSave(
                         RecordingSettingsState(
-                            resolution,
-                            frameRate,
+                            resolution = resolution,
+                            frameRate = frameRate,
                             codec = "H.264",
-                            autoFocus,
-                            stabilization,
-                            audioSource,
-                            imuFrequency
+                            autoFocus = autoFocus,
+                            stabilization = stabilization,
+                            audioSource = audioSource,
+                            imuFrequency = imuFrequency
                         )
                     )
                     onDismiss()

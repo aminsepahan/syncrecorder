@@ -1,6 +1,7 @@
 package com.appleader707.syncrecorder.presentation.components.settings_recording
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,51 +20,62 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun <T> DropdownSelector(
     label: String,
-    items: List<T>,
-    selectedItem: T,
-    onItemSelected: (T) -> Unit
+    options: List<T>,
+    selectedOption: T,
+    onOptionSelected: (T) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    // Show Dropdown and selected item
-    Column {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium)
-        Spacer(modifier = Modifier.height(8.dp))
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { expanded = !expanded }
-                .padding(16.dp)
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(4.dp))
+                .clip(RoundedCornerShape(12.dp))
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .clickable { expanded = true }
+                .padding(12.dp)
         ) {
             Text(
-                text = selectedItem.toString(),
-                modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 8.dp),
-                style = MaterialTheme.typography.bodyMedium
+                text = selectedOption.toString(),
+                style = MaterialTheme.typography.bodyLarge
             )
         }
 
         DropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface)
         ) {
-            items.forEach { item ->
+            options.forEach { option ->
                 DropdownMenuItem(
+                    text = { Text(option.toString()) },
                     onClick = {
-                        onItemSelected(item)
+                        onOptionSelected(option)
                         expanded = false
-                    },
-                    text = {
-                        Text(item.toString())
                     }
                 )
             }
         }
     }
+
+    Spacer(modifier = Modifier.height(16.dp))
 }
+
