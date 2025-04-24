@@ -27,7 +27,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.asFlow
 import com.appleader707.syncrecorder.navigation.Router
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import timber.log.Timber
 
 @Composable
 fun PermissionScreen(
@@ -64,10 +66,18 @@ fun PermissionLayout(
     val permissionsState = rememberMultiplePermissionsState(viewState.permissions)
 
     LaunchedEffect(permissionsState.allPermissionsGranted) {
+        permissionsState.permissions.forEach { perm ->
+            Timber.d("Permission: ${perm.permission} -> Granted: ${perm.status.isGranted}")
+        }
+
         if (permissionsState.allPermissionsGranted) {
+            Timber.d("✅ All permissions granted. Going to RecordingScreen.")
             onEventHandler.invoke(PermissionViewEvent.GoRecordingPage)
+        } else {
+            Timber.w("❌ Not all permissions granted yet.")
         }
     }
+
 
     Surface(
         modifier = Modifier.fillMaxSize(),

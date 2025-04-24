@@ -12,7 +12,5 @@ data class PermissionViewState(
         android.Manifest.permission.CAMERA,
         android.Manifest.permission.RECORD_AUDIO,
         android.Manifest.permission.BODY_SENSORS,
-        android.Manifest.permission.READ_EXTERNAL_STORAGE,
-        android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
     )
 ) : BaseViewState
