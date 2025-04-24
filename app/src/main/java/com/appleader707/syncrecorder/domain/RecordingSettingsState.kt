@@ -1,5 +1,8 @@
-package com.appleader707.syncrecorder.presentation.components.settings_recording
+package com.appleader707.syncrecorder.domain
 
+import androidx.annotation.Keep
+
+@Keep
 data class RecordingSettingsState(
     val resolution: String = "720p",
     val frameRate: Int = 30,

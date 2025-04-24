@@ -3,6 +3,8 @@ package com.appleader707.syncrecorder.presentation.ui.recording
 import androidx.lifecycle.viewModelScope
 import com.appleader707.common.ui.base.BaseViewModel
 import com.appleader707.common.ui.livedata.SingleLiveData
+import com.appleader707.syncrecorder.business.usecase.GetRecordingSettingsUseCase
+import com.appleader707.syncrecorder.business.usecase.SetRecordingSettingsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
@@ -24,6 +26,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RecordingViewModel @Inject constructor(
+    private val getRecordingSettingsUseCase: GetRecordingSettingsUseCase,
+    private val setRecordingSettingsUseCase: SetRecordingSettingsUseCase,
 ) : BaseViewModel<RecordingViewEvent>() {
 
     private val _state = MutableStateFlow(RecordingViewState())
@@ -53,8 +57,17 @@ class RecordingViewModel @Inject constructor(
             }
 
             is RecordingViewEvent.SaveSettings -> {
-                //save in dataStore
-                updateState { it.copy(settingsState = event.settings, settingsDialogVisible = false) }
+                viewModelScope.launch {
+                    setRecordingSettingsUseCase(event.settings)
+                    updateState { it.copy(settingsState = event.settings, settingsDialogVisible = false) }
+                }
+            }
+
+            RecordingViewEvent.LoadSettings -> {
+                viewModelScope.launch {
+                    val settingsState = getRecordingSettingsUseCase()
+                    updateState { it.copy(settingsState = settingsState) }
+                }
             }
         }
     }

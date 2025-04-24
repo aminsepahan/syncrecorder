@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.appleader707.syncrecorder.domain.RecordingSettingsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

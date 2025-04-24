@@ -62,6 +62,10 @@ fun RecordingScreen(
         viewModel.clearEffect()
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.processEvent(RecordingViewEvent.LoadSettings)
+    }
+
     RecordingLayout(
         viewState = viewState,
         onEventHandler = viewModel::processEvent,

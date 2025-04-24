@@ -1,7 +1,7 @@
 package com.appleader707.syncrecorder.presentation.ui.recording
 
 import com.appleader707.common.ui.base.BaseViewState
-import com.appleader707.syncrecorder.presentation.components.settings_recording.RecordingSettingsState
+import com.appleader707.syncrecorder.domain.RecordingSettingsState
 
 /**
  *
