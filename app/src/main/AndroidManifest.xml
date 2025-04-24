@@ -11,6 +11,7 @@
   <!-- Storage access (for save file) -->
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
 
   <!-- Foreground service (for long record in background) -->
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />

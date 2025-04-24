@@ -1,5 +1,6 @@
 package com.appleader707.syncrecorder.presentation.ui.recording
 
+import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -19,14 +20,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.appleader707.syncrecorder.extension.Helper
 import com.appleader707.syncrecorder.navigation.Router
 import com.appleader707.syncrecorder.presentation.components.CameraPreviewView
 import com.appleader707.syncrecorder.presentation.components.settings_recording.SettingsBottomSheet
@@ -43,15 +47,11 @@ fun RecordingScreen(
         when (val effect = viewEffect) {
             RecordingViewEffect.DoNothing -> {}
             RecordingViewEffect.RecordingStarted -> {
-
+                Helper.showMessage("Recording started.")
             }
 
             RecordingViewEffect.RecordingStopped -> {
-
-            }
-
-            is RecordingViewEffect.Error -> {
-
+                Helper.showMessage("Recording stoped.")
             }
         }
 
@@ -74,10 +74,16 @@ fun RecordingLayout(
     viewState: RecordingViewState,
     onEventHandler: (RecordingViewEvent) -> Unit,
 ) {
+    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val previewView = remember { PreviewView(context) }
+    val surfaceProvider = previewView.surfaceProvider
+
     Box(modifier = Modifier.fillMaxSize()) {
         CameraPreviewView(
+            context = context,
             lifecycleOwner = lifecycleOwner,
+            previewView = previewView,
             modifier = Modifier.fillMaxSize()
         )
 
@@ -105,7 +111,13 @@ fun RecordingLayout(
 
         IconButton(
             onClick = {
-                onEventHandler(RecordingViewEvent.ToggleRecording)
+                onEventHandler(
+                    RecordingViewEvent.ToggleRecording(
+                        context,
+                        lifecycleOwner,
+                        surfaceProvider
+                    )
+                )
             },
             modifier = Modifier
                 .align(Alignment.BottomCenter)

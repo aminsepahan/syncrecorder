@@ -5,11 +5,13 @@ import android.app.Activity
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.os.Environment
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
 import com.appleader707.syncrecorder.core.HComponentActivity
+import java.io.File
 
 @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
 class Helper {
@@ -67,6 +69,15 @@ class Helper {
 
         fun getString(@StringRes id: Int): String {
             return HComponentActivity.currentActivity.getString(id)
+        }
+
+        fun getSyncRecorderDir(): File {
+            val externalRoot = Environment.getExternalStorageDirectory()
+            val syncRecorderDir = File(externalRoot, "SyncRecorder")
+            if (!syncRecorderDir.exists()) {
+                syncRecorderDir.mkdirs()
+            }
+            return syncRecorderDir
         }
     }
 }

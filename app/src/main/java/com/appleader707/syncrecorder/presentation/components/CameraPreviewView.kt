@@ -1,13 +1,12 @@
 package com.appleader707.syncrecorder.presentation.components
 
+import android.content.Context
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
@@ -16,12 +15,11 @@ import timber.log.Timber
 
 @Composable
 fun CameraPreviewView(
+    context: Context,
     lifecycleOwner: LifecycleOwner,
+    previewView: PreviewView,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    val previewView = remember { PreviewView(context) }
-
     AndroidView(
         factory = { previewView },
         modifier = modifier,

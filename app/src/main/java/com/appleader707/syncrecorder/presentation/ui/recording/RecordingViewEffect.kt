@@ -10,5 +10,4 @@ sealed class RecordingViewEffect : BaseViewEffect {
     data object DoNothing : RecordingViewEffect()
     object RecordingStarted : RecordingViewEffect()
     object RecordingStopped : RecordingViewEffect()
-    data class Error(val message: String) : RecordingViewEffect()
 }
