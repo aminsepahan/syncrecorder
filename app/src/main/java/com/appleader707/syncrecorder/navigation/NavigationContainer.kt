@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,6 +17,7 @@ import com.appleader707.syncrecorder.presentation.ui.recording.RecordingScreen
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun NavigationContainer(
+    modifier: Modifier = Modifier,
     router: Router,
     navController: NavHostController,
 ) {

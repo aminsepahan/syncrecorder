@@ -3,10 +3,12 @@ package com.appleader707.syncrecorder.presentation.ui.main
 import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.appleader707.syncrecorder.navigation.NavigationContainer
@@ -30,7 +32,11 @@ fun MainScreen(finish: () -> Unit) {
             }
         }
     }
-    Scaffold {
-        NavigationContainer(router, navController)
+    Scaffold { innerPadding ->
+        NavigationContainer(
+            modifier = Modifier.padding(innerPadding),
+            router = router,
+            navController = navController
+        )
     }
 }
