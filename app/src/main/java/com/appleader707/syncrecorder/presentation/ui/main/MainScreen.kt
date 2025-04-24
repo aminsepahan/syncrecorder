@@ -26,7 +26,7 @@ fun MainScreen(finish: () -> Unit) {
     val router: Router = remember { RouterImpl(navController) }
 
     when (route) {
-        Screen.Recording.route, Screen.Permission.route -> {
+        Screen.Recording.route -> {
             BackHandler {
                 finish()
             }
