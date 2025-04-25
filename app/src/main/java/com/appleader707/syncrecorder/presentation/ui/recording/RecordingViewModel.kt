@@ -25,6 +25,8 @@ import com.appleader707.syncrecorder.business.usecase.GetRecordingSettingsUseCas
 import com.appleader707.syncrecorder.business.usecase.SetRecordingSettingsUseCase
 import com.appleader707.syncrecorder.domain.SensorSnapshot
 import com.appleader707.syncrecorder.extension.Helper
+import com.arthenica.ffmpegkit.FFmpegKit
+import com.arthenica.ffmpegkit.ReturnCode
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -81,14 +83,10 @@ class RecordingViewModel @Inject constructor(
         override fun onSensorChanged(event: SensorEvent) {
             val snapshot = SensorSnapshot(
                 type = event.sensor.type,
-                timestampNanos = System.nanoTime(),
+                timestampNanos = (event.timestamp - recordingStartNanos),
                 values = event.values.toList()
             )
             sensorData.add(snapshot)
-
-            val jsonLine = Gson().toJson(snapshot)
-            sensorWriter?.write(jsonLine + "\n")
-            sensorWriter?.flush()
         }
 
         override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
@@ -99,7 +97,7 @@ class RecordingViewModel @Inject constructor(
             is RecordingViewEvent.ToggleRecording -> {
                 val isRecording = _state.value.isRecording
                 if (isRecording) {
-                    stopAll(event.context)
+                    stopAll()
                 } else {
                     startAll(event.context, event.lifecycleOwner, event.surfaceProvider)
                 }
@@ -147,7 +145,7 @@ class RecordingViewModel @Inject constructor(
         effect.postValue(RecordingViewEffect.RecordingStarted)
     }
 
-    fun stopAll(context: Context) {
+    fun stopAll() {
         stopRecording()
         stopSensors()
         stopDurationMillis()
@@ -155,17 +153,124 @@ class RecordingViewModel @Inject constructor(
         effect.postValue(RecordingViewEffect.RecordingStopped)
     }
 
+    private fun saveVideo() {
+        val sensorFileJson = File(
+            Helper.getSyncRecorderDir(),
+            "sensor_data_${getRecordingStartNanos()}.jsonl"
+        )
+        val metadataFile = File(Helper.getSyncRecorderDir(), "sensor_data.srt")
+        convertJsonToSRT(sensorFileJson, metadataFile)
+        embedSubtitleIntoVideo()
+    }
+
+    private fun embedSubtitleIntoVideo() {
+        val videoFile = File(Helper.getSyncRecorderDir(), "recorded_data.mp4")
+        val subtitleFile = File(Helper.getSyncRecorderDir(), "sensor_data.srt")
+        val outputFile = File(Helper.getSyncRecorderDir(), "output_with_subtitles.mp4")
+
+        val cmd = listOf(
+            "-y",
+            "-i", videoFile.absolutePath,
+            "-vf", "subtitles=${subtitleFile.absolutePath}",  // Burn subtitles
+            "-c:a", "copy",
+            outputFile.absolutePath
+        )
+
+        FFmpegKit.executeAsync(cmd.joinToString(" ")) { session ->
+            val returnCode = session.returnCode
+            if (ReturnCode.isSuccess(returnCode)) {
+                Timber.tag(TAG).d("✅ Subtitle embedded successfully into video.")
+            } else {
+                Timber.tag(TAG).e("❌ FFmpeg failed: ${session.failStackTrace}")
+            }
+        }
+    }
+
+    fun convertJsonToSRT(jsonFile: File, outputSrt: File) {
+        val json = jsonFile.readText()
+        val data = Gson().fromJson(json, Array<SensorSnapshot>::class.java)
+
+        if (data.isEmpty()) return
+
+        val baseTime = data.first().timestampNanos / 1_000_000  // اولین timestamp
+
+        outputSrt.bufferedWriter().use { out ->
+            var index = 1
+            var previousTime = 0L
+
+            data.forEach { snapshot ->
+                val currentTime = (snapshot.timestampNanos / 1_000_000) - baseTime
+                val values = snapshot.values.joinToString(",") { "%.5f".format(it) }
+                val type = when (snapshot.type) {
+                    Sensor.TYPE_ACCELEROMETER -> "ACC"
+                    Sensor.TYPE_GYROSCOPE -> "GYRO"
+                    Sensor.TYPE_MAGNETIC_FIELD -> "MAG"
+                    else -> "SENSOR_${snapshot.type}"
+                }
+
+                out.write("$index\n")
+                out.write("${formatTime(previousTime)} --> ${formatTime(currentTime)}\n")
+                out.write("$type: $values\n\n")
+
+                previousTime = currentTime
+                index++
+            }
+        }
+    }
+
+    fun formatTime(ms: Long): String {
+        val hours = ms / 3600000
+        val minutes = (ms % 3600000) / 60000
+        val seconds = (ms % 60000) / 1000
+        val millis = ms % 1000
+        return "%02d:%02d:%02d,%03d".format(hours, minutes, seconds, millis)
+    }
+
+    /*fun convertJsonToFFMetadata(jsonFile: File, outputMetadata: File) {
+        val json = jsonFile.readText()
+        val data = Gson().fromJson(json, Array<SensorSnapshot>::class.java)
+
+        outputMetadata.bufferedWriter().use { out ->
+            out.write(";FFMETADATA1\n")
+
+            out.write("[metadata]\n")
+            out.write("title=Recorded Sensor Video\n")
+            out.write("description=Video enriched with synchronized sensor data\n")
+            out.write("encoder=SyncRecorder Android App\n")
+            out.write("comment=Includes accelerometer and gyroscope data per frame\n\n")
+
+            out.write("[sensor_data]\n")
+            out.write("timebase=1/1000\n")
+
+            data.forEach { snapshot ->
+                val timeMs = snapshot.timestampNanos / 1_000_000
+                val values = snapshot.values.joinToString(",") { "%.5f".format(it) }
+                val type = when (snapshot.type) {
+                    Sensor.TYPE_ACCELEROMETER -> "ACC"
+                    Sensor.TYPE_GYROSCOPE -> "GYRO"
+                    Sensor.TYPE_MAGNETIC_FIELD -> "MAG"
+                    else -> "SENSOR_${snapshot.type}"
+                }
+                out.write("$timeMs=$type:$values\n")
+            }
+        }
+    }*/
+
     private fun startRecording(
         context: Context,
         lifecycleOwner: LifecycleOwner,
         surfaceProvider: Preview.SurfaceProvider
     ) {
+        val directoryRecord = Helper.getSyncRecorderDir()
+
+        val videoFile = File(directoryRecord, "recorded_data.mp4")
+
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
 
             val recorder = Recorder.Builder()
-                .setQualitySelector(QualitySelector.from(Quality.UHD))
+                .setQualitySelector(QualitySelector.from(Quality.HD))
                 .build()
 
             videoCapture = VideoCapture.withOutput(recorder)
@@ -185,10 +290,8 @@ class RecordingViewModel @Inject constructor(
                     videoCapture!!
                 )
 
-                val file =
-                    File(Helper.getSyncRecorderDir(), "recorded_${System.currentTimeMillis()}.mp4")
-                recordedFile = file
-                val outputOptions = FileOutputOptions.Builder(file).build()
+                recordedFile = videoFile
+                val outputOptions = FileOutputOptions.Builder(videoFile).build()
 
                 recording = videoCapture?.output
                     ?.prepareRecording(context, outputOptions)
@@ -202,6 +305,7 @@ class RecordingViewModel @Inject constructor(
                             is VideoRecordEvent.Finalize -> {
                                 Timber.tag(TAG)
                                     .d("Recording File: ${recordEvent.outputResults.outputUri}")
+                                saveVideo()
                             }
                         }
                     }
@@ -221,7 +325,7 @@ class RecordingViewModel @Inject constructor(
     fun startSensors(context: Context) {
         val sensorFile = File(
             Helper.getSyncRecorderDir(),
-            "sensor_data_${System.currentTimeMillis()}.jsonl"
+            "sensor_data_${getRecordingStartNanos()}.jsonl"
         )
         sensorWriter = sensorFile.bufferedWriter()
 
@@ -241,6 +345,13 @@ class RecordingViewModel @Inject constructor(
 
     fun stopSensors() {
         sensorManager.unregisterListener(sensorListener)
+        convertDataSensorToJson()
+    }
+
+    private fun convertDataSensorToJson() {
+        val json = Gson().toJson(sensorData)
+        sensorWriter?.write(json)
+        sensorWriter?.flush()
         sensorWriter?.close()
         sensorWriter = null
     }
