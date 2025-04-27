@@ -19,8 +19,10 @@ class EmbedSubtitleIntoVideoUseCase @Inject constructor(
         val cmd = listOf(
             "-y",
             "-i", videoFile.absolutePath,
-            "-vf", "subtitles=${subtitleFile.absolutePath}",  // Burn subtitles
+            "-i", subtitleFile.absolutePath,
+            "-c:v", "copy",
             "-c:a", "copy",
+            "-c:s", "mov_text",
             outputFile.absolutePath
         )
 

@@ -6,19 +6,23 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewModelScope
 import com.appleader707.common.ui.base.BaseViewModel
 import com.appleader707.common.ui.livedata.SingleLiveData
-import com.appleader707.syncrecorder.TAG
+import com.appleader707.syncrecorder.business.usecase.convert.EmbedSubtitleIntoVideoUseCase
 import com.appleader707.syncrecorder.business.usecase.setting.GetRecordingSettingsUseCase
 import com.appleader707.syncrecorder.business.usecase.setting.SetRecordingSettingsUseCase
 import com.appleader707.syncrecorder.service.camera.CameraService
 import com.appleader707.syncrecorder.service.durationmillis.DurationMillisService
 import com.appleader707.syncrecorder.service.sensor.SensorService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
 /**
@@ -30,15 +34,18 @@ import javax.inject.Inject
 class RecordingViewModel @Inject constructor(
     private val getRecordingSettingsUseCase: GetRecordingSettingsUseCase,
     private val setRecordingSettingsUseCase: SetRecordingSettingsUseCase,
+    private val embedSubtitleIntoVideoUseCase: EmbedSubtitleIntoVideoUseCase,
     private val durationMillisService: DurationMillisService,
     private val sensorService: SensorService,
-    private val cameraService: CameraService
+    private val cameraService: CameraService,
 ) : BaseViewModel<RecordingViewEvent>() {
 
     private val _state = MutableStateFlow(RecordingViewState())
     val state: StateFlow<RecordingViewState> = _state.asStateFlow()
 
     val effect = SingleLiveData<RecordingViewEffect>()
+
+    private var autoRestartJob: Job? = null
 
     override fun processEvent(event: RecordingViewEvent) {
         when (event) {
@@ -87,25 +94,25 @@ class RecordingViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             _state.value.recordingStartNanos = System.nanoTime()
-
             cameraService.startRecording(
                 context = context,
                 lifecycleOwner = lifecycleOwner,
                 surfaceProvider = surfaceProvider,
-                recordingStartNanos = _state.value.recordingStartNanos,
-                onRecordingStarted = {
-                    Timber.tag(TAG).d("Recording Started Callback")
-                },
-                onRecordingFinished = {
-                    Timber.tag(TAG).d("Recording Finished Callback")
-                }
+                recordingCount = _state.value.recordingCount,
+                finalizeVideo = { saveSegementEmbedVideo() }
             )
 
-            sensorService.startSensors(context, _state.value.recordingStartNanos)
+            sensorService.startSensors(
+                context,
+                _state.value.recordingStartNanos,
+                _state.value.recordingCount
+            )
 
             durationMillisService.start(viewModelScope) { newDuration ->
                 updateState { it.copy(durationMillis = newDuration) }
             }
+
+            startAutoRestartLoop(context, lifecycleOwner, surfaceProvider)
 
             updateState { it.copy(isRecording = true, durationMillis = 0L) }
 
@@ -115,11 +122,61 @@ class RecordingViewModel @Inject constructor(
 
     fun stopAll() {
         viewModelScope.launch {
-            cameraService.stopRecording()
-            sensorService.stopSensors()
+            autoRestartJob?.cancel()
+            autoRestartJob = null
             durationMillisService.stop()
+            sensorService.stopSensors(_state.value.recordingCount)
+            cameraService.stopRecording()
             updateState { it.copy(isRecording = false) }
             effect.postValue(RecordingViewEffect.RecordingStopped)
+        }
+    }
+
+    private fun saveSegementEmbedVideo() {
+        val recordingCount = _state.value.recordingCount
+
+        viewModelScope.launch(Dispatchers.IO) {
+            embedSubtitleIntoVideoUseCase(
+                videoNameFile = "recorded_data_${recordingCount}.mp4",
+                subtitleNameFile = "sensor_data_${recordingCount}.srt",
+                outputNameFile = "output_with_subtitles_${recordingCount}.mp4"
+            )
+        }
+    }
+
+    private fun startAutoRestartLoop(
+        context: Context,
+        lifecycleOwner: LifecycleOwner,
+        surfaceProvider: Preview.SurfaceProvider
+    ) {
+        autoRestartJob?.cancel()
+        autoRestartJob = viewModelScope.launch {
+            while (currentCoroutineContext().isActive) {
+                delay(5 * 1000L)
+
+                cameraService.stopRecording()
+                sensorService.stopSensors(_state.value.recordingCount)
+
+                saveSegementEmbedVideo()
+
+                updateState { it.copy(recordingCount = it.recordingCount + 1) }
+
+                _state.value.recordingStartNanos = System.nanoTime()
+
+                cameraService.startRecording(
+                    context = context,
+                    lifecycleOwner = lifecycleOwner,
+                    surfaceProvider = surfaceProvider,
+                    recordingCount = _state.value.recordingCount,
+                    finalizeVideo = { saveSegementEmbedVideo() }
+                )
+
+                sensorService.startSensors(
+                    context,
+                    _state.value.recordingStartNanos,
+                    _state.value.recordingCount
+                )
+            }
         }
     }
 

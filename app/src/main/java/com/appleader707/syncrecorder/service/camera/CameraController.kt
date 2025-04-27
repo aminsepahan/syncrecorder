@@ -14,7 +14,6 @@ import timber.log.Timber
 import javax.inject.Inject
 
 class CameraController @Inject constructor() {
-
     private var cameraProvider: ProcessCameraProvider? = null
     private var preview: Preview? = null
     private var videoCapture: VideoCapture<Recorder>? = null
@@ -23,7 +22,7 @@ class CameraController @Inject constructor() {
         context: Context,
         lifecycleOwner: LifecycleOwner,
         surfaceProvider: Preview.SurfaceProvider,
-        quality: Quality = Quality.HD
+        quality: Quality = Quality.HD,
     ) {
         cameraProvider = ProcessCameraProvider.getInstance(context).await()
 
@@ -45,7 +44,7 @@ class CameraController @Inject constructor() {
                 lifecycleOwner,
                 cameraSelector,
                 preview,
-                videoCapture
+                videoCapture,
             )
         } catch (exc: Exception) {
             Timber.tag("CameraController").e(exc, "CameraX binding failed")

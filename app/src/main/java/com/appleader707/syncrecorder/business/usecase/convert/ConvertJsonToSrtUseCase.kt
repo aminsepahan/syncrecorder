@@ -21,7 +21,7 @@ class ConvertJsonToSrtUseCase @Inject constructor(
 
         if (data.isEmpty()) return
 
-        val baseTime = data.first().timestampNanos / 1_000_000  // اولین timestamp
+        val baseTime = data.first().timestampNanos / 1_000_000  // first timestamp
 
         return sensorFileSrt.bufferedWriter().use { out ->
             var index = 1

@@ -5,6 +5,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import com.appleader707.syncrecorder.business.usecase.convert.ConvertJsonToSrtUseCase
 import com.appleader707.syncrecorder.business.usecase.directory.GetSyncRecorderDirectoryUseCase
 import com.appleader707.syncrecorder.domain.SensorSnapshot
 import com.google.gson.Gson
@@ -13,7 +14,8 @@ import java.io.File
 import javax.inject.Inject
 
 class SensorService @Inject constructor(
-    private val getSyncRecorderDirectoryUseCase: GetSyncRecorderDirectoryUseCase
+    private val getSyncRecorderDirectoryUseCase: GetSyncRecorderDirectoryUseCase,
+    private val convertJsonToSrtUseCase: ConvertJsonToSrtUseCase,
 ) {
     private lateinit var sensorManager: SensorManager
     private val sensorData = mutableListOf<SensorSnapshot>()
@@ -33,12 +35,12 @@ class SensorService @Inject constructor(
         override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
     }
 
-    fun startSensors(context: Context, recordingStartNanos: Long) {
+    fun startSensors(context: Context, recordingStartNanos: Long, recordingCount: Int) {
         this.recordingStartNanos = recordingStartNanos
 
         val sensorFile = File(
             getSyncRecorderDirectoryUseCase(),
-            "sensor_data_${recordingStartNanos}.jsonl"
+            "sensor_data_${recordingCount}.jsonl"
         )
         sensorWriter = sensorFile.bufferedWriter()
 
@@ -56,18 +58,17 @@ class SensorService @Inject constructor(
         }
     }
 
-    fun stopSensors() {
+    fun stopSensors(recordingCount: Int) {
         sensorManager.unregisterListener(sensorListener)
-        convertDataSensorToJson()
-    }
-
-    private fun convertDataSensorToJson() {
         val json = Gson().toJson(sensorData)
         sensorWriter?.apply {
             write(json)
             flush()
             close()
         }
-        sensorWriter = null
+        convertJsonToSrtUseCase(
+            "sensor_data_${recordingCount}.jsonl",
+            "sensor_data_${recordingCount}.srt"
+        )
     }
 }
