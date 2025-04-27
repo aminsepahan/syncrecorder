@@ -7,7 +7,9 @@ import androidx.camera.video.Recording
 import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import com.appleader707.syncrecorder.TAG
 import com.appleader707.syncrecorder.business.usecase.directory.GetSyncRecorderDirectoryUseCase
+import kotlinx.coroutines.CompletableDeferred
 import timber.log.Timber
 import java.io.File
 import javax.inject.Inject
@@ -17,6 +19,8 @@ class CameraService @Inject constructor(
     private val cameraController: CameraController
 ) {
     private var recording: Recording? = null
+    private var onFinalizeCallback: (() -> Unit)? = null
+    private var finalizeDeferred: CompletableDeferred<Unit>? = null
 
     suspend fun startRecording(
         context: Context,
@@ -33,25 +37,35 @@ class CameraService @Inject constructor(
 
         val videoCapture = cameraController.getVideoCapture() ?: return
 
+        finalizeDeferred = CompletableDeferred()
+        onFinalizeCallback = {
+            Timber.tag(TAG).d("✅ Finalize callback called.")
+            finalizeVideo()
+            finalizeDeferred?.complete(Unit)
+        }
+
         recording = videoCapture.output
             .prepareRecording(context, outputOptions)
             .withAudioEnabled()
             .start(ContextCompat.getMainExecutor(context)) { recordEvent ->
                 when (recordEvent) {
                     is VideoRecordEvent.Start -> {
-                        Timber.tag("CameraService").d("Recording started")
+                        Timber.tag(TAG).d("Recording started")
                     }
 
                     is VideoRecordEvent.Finalize -> {
-                        Timber.tag("CameraService").d("Recording finalized")
-                        finalizeVideo()
+                        Timber.tag(TAG).d("Recording finalized")
+                        onFinalizeCallback?.invoke()
                     }
                 }
             }
     }
 
-    fun stopRecording() {
+    suspend fun stopRecordingAndWait() {
+        Timber.tag(TAG).d("⏹️ Stopping recording...")
         recording?.stop()
         recording = null
+        finalizeDeferred?.await()
+        Timber.tag(TAG).d("✅ Recording stopped and finalized.")
     }
 }
