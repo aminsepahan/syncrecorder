@@ -1,20 +1,20 @@
 package com.appleader707.syncrecorder.presentation.ui.recording
 
 import android.content.Context
+import android.os.SystemClock
 import androidx.camera.core.Preview
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewModelScope
 import com.appleader707.common.ui.base.BaseViewModel
 import com.appleader707.common.ui.livedata.SingleLiveData
-import com.appleader707.syncrecorder.TAG
-import com.appleader707.syncrecorder.business.usecase.convert.EmbedSubtitleIntoVideoUseCase
 import com.appleader707.syncrecorder.business.usecase.setting.GetRecordingSettingsUseCase
 import com.appleader707.syncrecorder.business.usecase.setting.SetRecordingSettingsUseCase
+import com.appleader707.syncrecorder.domain.SaveTask
 import com.appleader707.syncrecorder.service.camera.CameraService
 import com.appleader707.syncrecorder.service.durationmillis.DurationMillisService
+import com.appleader707.syncrecorder.service.save.SaveService
 import com.appleader707.syncrecorder.service.sensor.SensorService
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
 /**
@@ -36,10 +35,10 @@ import javax.inject.Inject
 class RecordingViewModel @Inject constructor(
     private val getRecordingSettingsUseCase: GetRecordingSettingsUseCase,
     private val setRecordingSettingsUseCase: SetRecordingSettingsUseCase,
-    private val embedSubtitleIntoVideoUseCase: EmbedSubtitleIntoVideoUseCase,
     private val durationMillisService: DurationMillisService,
     private val sensorService: SensorService,
     private val cameraService: CameraService,
+    private val saveService: SaveService,
 ) : BaseViewModel<RecordingViewEvent>() {
 
     private val _state = MutableStateFlow(RecordingViewState())
@@ -95,7 +94,7 @@ class RecordingViewModel @Inject constructor(
         surfaceProvider: Preview.SurfaceProvider
     ) {
         viewModelScope.launch {
-            _state.value.recordingStartNanos = System.nanoTime()
+            _state.value.recordingStartNanos = SystemClock.elapsedRealtimeNanos()
             cameraService.startRecording(
                 context = context,
                 lifecycleOwner = lifecycleOwner,
@@ -114,6 +113,8 @@ class RecordingViewModel @Inject constructor(
                 updateState { it.copy(durationMillis = newDuration) }
             }
 
+            saveService.startService(viewModelScope)
+
             startAutoRestartLoop(context, lifecycleOwner, surfaceProvider)
 
             updateState { it.copy(isRecording = true, durationMillis = 0L) }
@@ -124,32 +125,27 @@ class RecordingViewModel @Inject constructor(
 
     fun stopAll() {
         viewModelScope.launch {
-            autoRestartJob?.cancel()
-            autoRestartJob = null
-            durationMillisService.stop()
-
             val currentCount = _state.value.recordingCount
             sensorService.stopSensors(currentCount)
+
+
+            autoRestartJob?.cancel()
+            autoRestartJob = null
+
+            durationMillisService.stop()
+
             cameraService.stopRecordingAndWait()
-            saveSegementEmbedVideo(currentCount)
+
+            saveService.addTask(
+                SaveTask(
+                    videoName = "recorded_data_${currentCount}.mp4",
+                    sensorName = "sensor_data_${currentCount}.srt",
+                    outputName = "output_with_subtitles_${currentCount}.mp4"
+                )
+            )
 
             updateState { it.copy(isRecording = false) }
             effect.postValue(RecordingViewEffect.RecordingStopped)
-        }
-    }
-
-    private fun saveSegementEmbedVideo(recordingCount: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                embedSubtitleIntoVideoUseCase(
-                    videoNameFile = "recorded_data_${recordingCount}.mp4",
-                    subtitleNameFile = "sensor_data_${recordingCount}.srt",
-                    outputNameFile = "output_with_subtitles_${recordingCount}.mp4"
-                )
-                Timber.tag(TAG).d("✅ Subtitles embedded successfully for segment $recordingCount")
-            } catch (e: Exception) {
-                Timber.tag(TAG).e(e, "❌ Failed to embed subtitles for segment $recordingCount")
-            }
         }
     }
 
@@ -167,10 +163,16 @@ class RecordingViewModel @Inject constructor(
 
                 sensorService.stopSensors(currentCount)
                 cameraService.stopRecordingAndWait()
-                saveSegementEmbedVideo(currentCount)
+
+                saveService.addTask(
+                    SaveTask(
+                        videoName = "recorded_data_${currentCount}.mp4",
+                        sensorName = "sensor_data_${currentCount}.srt",
+                        outputName = "output_with_subtitles_${currentCount}.mp4"
+                    )
+                )
 
                 updateState { it.copy(recordingCount = it.recordingCount + 1) }
-
                 _state.value.recordingStartNanos = System.nanoTime()
 
                 cameraService.startRecording(
