@@ -21,19 +21,20 @@ class ConvertJsonToSrtUseCase @Inject constructor(
 
         if (data.isEmpty()) return
 
-        val baseTime = data.first().timestampNanos / 1_000_000  // first timestamp
+        val baseTime = data.first().timestampMills   // first timestamp
 
         return sensorFileSrt.bufferedWriter().use { out ->
             var index = 1
             var previousTime = 0L
 
             data.forEach { snapshot ->
-                val currentTime = (snapshot.timestampNanos / 1_000_000) - baseTime
+                val currentTime = snapshot.timestampMills  - baseTime
                 val values = snapshot.values.joinToString(",") { "%.5f".format(it) }
                 val type = when (snapshot.type) {
                     Sensor.TYPE_ACCELEROMETER -> "ACC"
                     Sensor.TYPE_GYROSCOPE -> "GYRO"
                     Sensor.TYPE_MAGNETIC_FIELD -> "MAG"
+                    Sensor.TYPE_LINEAR_ACCELERATION -> "L_ACC"
                     else -> "SENSOR_${snapshot.type}"
                 }
 

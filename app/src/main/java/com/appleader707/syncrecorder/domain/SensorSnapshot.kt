@@ -5,6 +5,6 @@ import androidx.annotation.Keep
 @Keep
 data class SensorSnapshot(
     val type: Int,
-    val timestampNanos: Long,
+    val timestampMills: Long,
     val values: List<Float>
 )
