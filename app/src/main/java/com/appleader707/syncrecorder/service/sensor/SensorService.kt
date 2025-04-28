@@ -26,7 +26,7 @@ class SensorService @Inject constructor(
         override fun onSensorChanged(event: SensorEvent) {
             val snapshot = SensorSnapshot(
                 type = event.sensor.type,
-                timestampNanos = (event.timestamp - recordingStartNanos),
+                timestampMills = (event.timestamp - recordingStartNanos) / 1_000_000,
                 values = event.values.toList()
             )
             sensorData.add(snapshot)
@@ -47,14 +47,12 @@ class SensorService @Inject constructor(
         sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
         val sensors = listOf(
-            Sensor.TYPE_ACCELEROMETER,
-            Sensor.TYPE_GYROSCOPE,
-            Sensor.TYPE_MAGNETIC_FIELD
+            Sensor.TYPE_LINEAR_ACCELERATION,
         )
 
         sensors.forEach { type ->
             val sensor = sensorManager.getDefaultSensor(type)
-            sensorManager.registerListener(sensorListener, sensor, SensorManager.SENSOR_DELAY_GAME)
+            sensorManager.registerListener(sensorListener, sensor, SensorManager.SENSOR_DELAY_FASTEST)
         }
     }
 
@@ -70,5 +68,6 @@ class SensorService @Inject constructor(
             "sensor_data_${recordingCount}.jsonl",
             "sensor_data_${recordingCount}.srt"
         )
+        sensorData.clear()
     }
 }

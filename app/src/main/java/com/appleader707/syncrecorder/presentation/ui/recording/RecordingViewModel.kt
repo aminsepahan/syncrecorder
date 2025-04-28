@@ -1,6 +1,7 @@
 package com.appleader707.syncrecorder.presentation.ui.recording
 
 import android.content.Context
+import android.os.SystemClock
 import androidx.camera.core.Preview
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewModelScope
@@ -95,7 +96,7 @@ class RecordingViewModel @Inject constructor(
         surfaceProvider: Preview.SurfaceProvider
     ) {
         viewModelScope.launch {
-            _state.value.recordingStartNanos = System.nanoTime()
+            _state.value.recordingStartNanos = SystemClock.elapsedRealtimeNanos()
             cameraService.startRecording(
                 context = context,
                 lifecycleOwner = lifecycleOwner,
@@ -124,21 +125,21 @@ class RecordingViewModel @Inject constructor(
 
     fun stopAll() {
         viewModelScope.launch {
+            val currentCount = _state.value.recordingCount
+            sensorService.stopSensors(currentCount)
             autoRestartJob?.cancel()
             autoRestartJob = null
             durationMillisService.stop()
 
-            val currentCount = _state.value.recordingCount
-            sensorService.stopSensors(currentCount)
             cameraService.stopRecordingAndWait()
-            saveSegementEmbedVideo(currentCount)
+            saveSegmentEmbedVideo(currentCount)
 
             updateState { it.copy(isRecording = false) }
             effect.postValue(RecordingViewEffect.RecordingStopped)
         }
     }
 
-    private fun saveSegementEmbedVideo(recordingCount: Int) {
+    private fun saveSegmentEmbedVideo(recordingCount: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 embedSubtitleIntoVideoUseCase(
@@ -167,7 +168,7 @@ class RecordingViewModel @Inject constructor(
 
                 sensorService.stopSensors(currentCount)
                 cameraService.stopRecordingAndWait()
-                saveSegementEmbedVideo(currentCount)
+                saveSegmentEmbedVideo(currentCount)
 
                 updateState { it.copy(recordingCount = it.recordingCount + 1) }
 
