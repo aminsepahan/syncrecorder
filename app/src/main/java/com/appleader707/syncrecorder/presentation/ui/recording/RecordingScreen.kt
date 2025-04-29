@@ -136,7 +136,7 @@ fun RecordingLayout(
             )
         }
 
-        AnimatedVisibility(viewState.settingsDialogVisible) {
+        AnimatedVisibility(viewState.settingsDialogVisible && !viewState.isRecording) {
             SettingsBottomSheet(
                 initialSettings = viewState.settingsState,
                 onDismiss = { onEventHandler(RecordingViewEvent.HideSettings) },

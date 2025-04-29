@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.appleader707.syncrecorder.TAG
 import com.appleader707.syncrecorder.business.usecase.directory.GetSyncRecorderDirectoryUseCase
+import com.appleader707.syncrecorder.domain.RecordingSettings
 import kotlinx.coroutines.CompletableDeferred
 import timber.log.Timber
 import java.io.File
@@ -27,13 +28,27 @@ class CameraService @Inject constructor(
         lifecycleOwner: LifecycleOwner,
         surfaceProvider: Preview.SurfaceProvider,
         recordingCount: Int,
+        recordingSettings: RecordingSettings,
         finalizeVideo: () -> Unit
     ) {
+        val quality = recordingSettings.getQuality()
+        val frameRate = recordingSettings.frameRate
+        val autoFocus = recordingSettings.autoFocus
+        val stabilization = recordingSettings.stabilization
+
         val directoryRecord = getSyncRecorderDirectoryUseCase()
         val videoFile = File(directoryRecord, "recorded_data_${recordingCount}.mp4")
         val outputOptions = FileOutputOptions.Builder(videoFile).build()
 
-        cameraController.initializeCamera(context, lifecycleOwner, surfaceProvider)
+        cameraController.initializeCamera(
+            context = context,
+            lifecycleOwner = lifecycleOwner,
+            surfaceProvider = surfaceProvider,
+            quality = quality,
+            frameRate = frameRate,
+            autoFocus = autoFocus,
+            stabilization = stabilization,
+        )
 
         val videoCapture = cameraController.getVideoCapture() ?: return
 

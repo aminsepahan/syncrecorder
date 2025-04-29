@@ -35,7 +35,12 @@ class SensorService @Inject constructor(
         override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
     }
 
-    fun startSensors(context: Context, recordingStartNanos: Long, recordingCount: Int) {
+    fun startSensors(
+        context: Context,
+        recordingStartNanos: Long,
+        recordingCount: Int,
+        imuFrequency: Int
+    ) {
         this.recordingStartNanos = recordingStartNanos
 
         val sensorFile = File(
@@ -52,7 +57,7 @@ class SensorService @Inject constructor(
 
         sensors.forEach { type ->
             val sensor = sensorManager.getDefaultSensor(type)
-            sensorManager.registerListener(sensorListener, sensor, SensorManager.SENSOR_DELAY_FASTEST)
+            sensorManager.registerListener(sensorListener, sensor, imuFrequency)
         }
     }
 

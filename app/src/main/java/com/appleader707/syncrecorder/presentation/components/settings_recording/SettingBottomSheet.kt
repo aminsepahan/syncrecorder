@@ -23,20 +23,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.appleader707.syncrecorder.domain.RecordingSettingsState
+import com.appleader707.syncrecorder.domain.RecordingSettings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsBottomSheet(
-    initialSettings: RecordingSettingsState,
+    initialSettings: RecordingSettings,
     onDismiss: () -> Unit,
-    onSave: (RecordingSettingsState) -> Unit
+    onSave: (RecordingSettings) -> Unit
 ) {
     var resolution by remember { mutableStateOf(initialSettings.resolution) }
     var frameRate by remember { mutableIntStateOf(initialSettings.frameRate) }
     var autoFocus by remember { mutableStateOf(initialSettings.autoFocus) }
     var stabilization by remember { mutableStateOf(initialSettings.stabilization) }
-    var audioSource by remember { mutableStateOf(initialSettings.audioSource) }
     var imuFrequency by remember { mutableIntStateOf(initialSettings.imuFrequency) }
 
     ModalBottomSheet(
@@ -56,13 +55,6 @@ fun SettingsBottomSheet(
 
             // Frame Rate
             DropdownSelector("Frame Rate", listOf(24, 30, 60), frameRate) { frameRate = it }
-
-            // Audio Source
-            DropdownSelector(
-                "Audio Source",
-                listOf("MIC", "CAMCORDER", "VOICE_RECOGNITION"),
-                audioSource
-            ) { audioSource = it }
 
             // IMU Frequency
             DropdownSelector("IMU Frequency", listOf(10, 50, 100), imuFrequency) {
@@ -89,13 +81,11 @@ fun SettingsBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     onSave(
-                        RecordingSettingsState(
+                        RecordingSettings(
                             resolution = resolution,
                             frameRate = frameRate,
-                            codec = "H.264",
                             autoFocus = autoFocus,
                             stabilization = stabilization,
-                            audioSource = audioSource,
                             imuFrequency = imuFrequency
                         )
                     )

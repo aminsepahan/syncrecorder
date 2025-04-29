@@ -95,18 +95,21 @@ class RecordingViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             _state.value.recordingStartNanos = SystemClock.elapsedRealtimeNanos()
+            val recordingSettings = getRecordingSettingsUseCase()
             cameraService.startRecording(
                 context = context,
                 lifecycleOwner = lifecycleOwner,
                 surfaceProvider = surfaceProvider,
                 recordingCount = _state.value.recordingCount,
+                recordingSettings = recordingSettings,
                 finalizeVideo = { }
             )
 
             sensorService.startSensors(
                 context,
-                _state.value.recordingStartNanos,
-                _state.value.recordingCount
+                recordingStartNanos = _state.value.recordingStartNanos,
+                recordingCount = _state.value.recordingCount,
+                imuFrequency = recordingSettings.getImuSensorDelay()
             )
 
             durationMillisService.start(viewModelScope) { newDuration ->
@@ -156,7 +159,7 @@ class RecordingViewModel @Inject constructor(
         autoRestartJob?.cancel()
         autoRestartJob = viewModelScope.launch {
             while (currentCoroutineContext().isActive) {
-                delay(5 * 1000L)
+                delay(30 * 60 * 1000L)
 
                 val currentCount = _state.value.recordingCount
 
@@ -174,18 +177,21 @@ class RecordingViewModel @Inject constructor(
                 updateState { it.copy(recordingCount = it.recordingCount + 1) }
                 _state.value.recordingStartNanos = System.nanoTime()
 
+                val recordingSettings = getRecordingSettingsUseCase()
                 cameraService.startRecording(
                     context = context,
                     lifecycleOwner = lifecycleOwner,
                     surfaceProvider = surfaceProvider,
                     recordingCount = _state.value.recordingCount,
+                    recordingSettings = recordingSettings,
                     finalizeVideo = { }
                 )
 
                 sensorService.startSensors(
                     context,
                     _state.value.recordingStartNanos,
-                    _state.value.recordingCount
+                    _state.value.recordingCount,
+                    imuFrequency = recordingSettings.imuFrequency
                 )
             }
         }

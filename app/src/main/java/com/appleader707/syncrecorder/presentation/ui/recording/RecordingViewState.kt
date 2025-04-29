@@ -1,7 +1,7 @@
 package com.appleader707.syncrecorder.presentation.ui.recording
 
 import com.appleader707.common.ui.base.BaseViewState
-import com.appleader707.syncrecorder.domain.RecordingSettingsState
+import com.appleader707.syncrecorder.domain.RecordingSettings
 
 /**
  *
@@ -12,7 +12,7 @@ data class RecordingViewState(
     val isRecording: Boolean = false,
     val durationMillis: Long = 0L,
     val settingsDialogVisible: Boolean = false,
-    val settingsState: RecordingSettingsState = RecordingSettingsState(),
+    val settingsState: RecordingSettings = RecordingSettings(),
     var recordingStartNanos: Long = 0,
     var recordingCount: Int = 1
 ) : BaseViewState {
