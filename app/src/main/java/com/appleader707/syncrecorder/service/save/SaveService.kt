@@ -6,6 +6,7 @@ import com.appleader707.syncrecorder.business.usecase.directory.GetSyncRecorderD
 import com.appleader707.syncrecorder.domain.SaveTask
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
@@ -16,34 +17,47 @@ class SaveService @Inject constructor(
     private val getSyncRecorderDirectoryUseCase: GetSyncRecorderDirectoryUseCase,
     //private val videoCompressionUseCase: VideoCompressionUseCase,
 ) {
-    fun saveOutpuVideo(task: SaveTask) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val subtitleFiles = listOf(
-                    "accelerometer_data_${task.recordingCount}.srt",
-                    "gyroscope_data_${task.recordingCount}.srt",
-                    "magnetometer_data_${task.recordingCount}.srt"
-                )
+    private val queue = Channel<SaveTask>(Channel.UNLIMITED)
+    private var serviceStarted = false
 
-                embedSubtitleIntoVideoUseCase(
-                    task.videoName,
-                    subtitleFiles,
-                    task.outputName
-                )
+    fun startService(scope: CoroutineScope) {
+        if (serviceStarted) return
+        serviceStarted = true
 
-                /*val compressedVideoName = "compressed_${task.outputName}"
-                val compressJob = async {
-                    videoCompressionUseCase(task.outputName, compressedVideoName)
+        scope.launch(Dispatchers.IO) {
+            for (task in queue) {
+                try {
+                    val subtitleFiles = listOf(
+                        "accelerometer_data_${task.recordingCount}.srt",
+                        "gyroscope_data_${task.recordingCount}.srt",
+                        "magnetometer_data_${task.recordingCount}.srt"
+                    )
+
+                    embedSubtitleIntoVideoUseCase(
+                        task.videoName,
+                        subtitleFiles,
+                        task.outputName
+                    )
+
+                    /*val compressedVideoName = "compressed_${task.outputName}"
+                    val compressJob = async {
+                        videoCompressionUseCase(task.outputName, compressedVideoName)
+                    }
+                    compressJob.await()
+
+                    deleteOldVideoFiles(task.videoName, task.outputName)*/
+
+                    Timber.tag(TAG).d("✅ Embedded and saved: ${task.outputName}")
+                } catch (e: Exception) {
+                    Timber.tag(TAG).e(e, "❌ Failed saving: ${task.outputName}")
                 }
-                compressJob.await()
-
-                deleteOldVideoFiles(task.videoName, task.outputName)*/
-
-                Timber.tag(TAG).d("✅ Embedded and saved: ${task.outputName}")
-            } catch (e: Exception) {
-                Timber.tag(TAG).e(e, "❌ Failed saving: ${task.outputName}")
             }
         }
+    }
+
+    suspend fun addTask(task: SaveTask) {
+        Timber.tag(TAG).d("📥 Task added to queue: $task")
+        queue.send(task)
     }
 
     // Delete old files

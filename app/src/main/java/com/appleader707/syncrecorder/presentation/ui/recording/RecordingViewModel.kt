@@ -16,7 +16,6 @@ import com.appleader707.syncrecorder.service.save.SaveService
 import com.appleader707.syncrecorder.service.sensor.SensorService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -116,6 +115,8 @@ class RecordingViewModel @Inject constructor(
                 updateState { it.copy(durationMillis = newDuration) }
             }
 
+            saveService.startService(viewModelScope)
+
             startAutoRestartLoop(context, lifecycleOwner, surfaceProvider)
 
             updateState { it.copy(isRecording = true, durationMillis = 0L) }
@@ -128,21 +129,16 @@ class RecordingViewModel @Inject constructor(
         viewModelScope.launch {
             val currentCount = _state.value.recordingCount
 
-            val stopSensorsJob = async { sensorService.stopSensors(currentCount) }
-            val stopRecordingJob = async { cameraService.stopRecordingAndWait() }
-            val saveOutputVideo = async {
-                saveService.saveOutpuVideo(
-                    SaveTask(
-                        videoName = "recorded_data_${currentCount}.mp4",
-                        outputName = "output_with_subtitles_${currentCount}.mp4",
-                        recordingCount = currentCount
-                    )
-                )
-            }
+            sensorService.stopSensors(currentCount)
+            cameraService.stopRecordingAndWait()
 
-            stopSensorsJob.await()
-            stopRecordingJob.await()
-            saveOutputVideo.await()
+            saveService.addTask(
+                SaveTask(
+                    videoName = "recorded_data_${currentCount}.mp4",
+                    outputName = "output_with_subtitles_${currentCount}.mp4",
+                    recordingCount = currentCount
+                )
+            )
 
             autoRestartJob?.cancel()
             autoRestartJob = null
@@ -161,25 +157,20 @@ class RecordingViewModel @Inject constructor(
         autoRestartJob?.cancel()
         autoRestartJob = viewModelScope.launch {
             while (currentCoroutineContext().isActive) {
-                delay(6 * 1000L)
+                delay(30 * 60 * 1000L)
 
                 val currentCount = _state.value.recordingCount
 
-                val stopSensorsJob = async { sensorService.stopSensors(currentCount) }
-                val stopRecordingJob = async { cameraService.stopRecordingAndWait() }
-                val saveOutputVideo = async {
-                    saveService.saveOutpuVideo(
-                        SaveTask(
-                            videoName = "recorded_data_${currentCount}.mp4",
-                            outputName = "output_with_subtitles_${currentCount}.mp4",
-                            recordingCount = currentCount
-                        )
-                    )
-                }
+                sensorService.stopSensors(currentCount)
+                cameraService.stopRecordingAndWait()
 
-                stopSensorsJob.await()
-                stopRecordingJob.await()
-                saveOutputVideo.await()
+                saveService.addTask(
+                    SaveTask(
+                        videoName = "recorded_data_${currentCount}.mp4",
+                        outputName = "output_with_subtitles_${currentCount}.mp4",
+                        recordingCount = currentCount
+                    )
+                )
 
                 updateState { it.copy(recordingCount = it.recordingCount + 1) }
                 _state.value.recordingStartNanos = System.nanoTime()
