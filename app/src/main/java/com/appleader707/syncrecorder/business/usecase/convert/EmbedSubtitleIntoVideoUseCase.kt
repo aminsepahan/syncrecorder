@@ -11,20 +11,40 @@ import javax.inject.Inject
 class EmbedSubtitleIntoVideoUseCase @Inject constructor(
     private val getSyncRecorderDirectoryUseCase: GetSyncRecorderDirectoryUseCase,
 ) {
-    operator fun invoke(videoNameFile: String, subtitleNameFile: String, outputNameFile: String) {
+    operator fun invoke(
+        videoNameFile: String,
+        subtitleNameFiles: List<String>,
+        outputNameFile: String
+    ) {
         val videoFile = File(getSyncRecorderDirectoryUseCase(), videoNameFile)
-        val subtitleFile = File(getSyncRecorderDirectoryUseCase(), subtitleNameFile)
         val outputFile = File(getSyncRecorderDirectoryUseCase(), outputNameFile)
 
-        val cmd = listOf(
+        val cmd = mutableListOf(
             "-y",
-            "-i", videoFile.absolutePath,
-            "-i", subtitleFile.absolutePath,
-            "-c:v", "copy",
-            "-c:a", "copy",
-            "-c:s", "mov_text",
-            outputFile.absolutePath
+            "-i", videoFile.absolutePath
         )
+
+        subtitleNameFiles.forEach { subtitleFile ->
+            val subtitleFilePath = File(getSyncRecorderDirectoryUseCase(), subtitleFile).absolutePath
+            cmd.add("-i")
+            cmd.add(subtitleFilePath)
+        }
+
+        cmd.add("-map")
+        cmd.add("0:v:0")
+        subtitleNameFiles.forEachIndexed { index, _ ->
+            cmd.add("-map")
+            cmd.add("${index + 1}:s:0")
+        }
+
+        cmd.add("-c:v")
+        cmd.add("copy")
+        cmd.add("-c:a")
+        cmd.add("copy")
+        cmd.add("-c:s")
+        cmd.add("mov_text")
+
+        cmd.add(outputFile.absolutePath)
 
         FFmpegKit.executeAsync(cmd.joinToString(" ")) { session ->
             val returnCode = session.returnCode

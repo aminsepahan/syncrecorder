@@ -25,10 +25,12 @@ class ConvertJsonToSrtUseCase @Inject constructor(
 
         return sensorFileSrt.bufferedWriter().use { out ->
             var index = 1
-            var previousTime = 0L
 
             data.forEach { snapshot ->
-                val currentTime = snapshot.timestampMills  - baseTime
+                val currentTime = snapshot.timestampMills - baseTime
+                val displayDuration = 50L // At least 50 milliseconds to be visible in the player
+                val endTime = currentTime + displayDuration
+
                 val values = snapshot.values.joinToString(",") { "%.5f".format(it) }
                 val type = when (snapshot.type) {
                     Sensor.TYPE_ACCELEROMETER -> "ACC"
@@ -39,16 +41,9 @@ class ConvertJsonToSrtUseCase @Inject constructor(
                 }
 
                 out.write("$index\n")
-                out.write(
-                    "${getFormatTimeUseCase(previousTime)} --> ${
-                        getFormatTimeUseCase(
-                            currentTime
-                        )
-                    }\n"
-                )
+                out.write("${getFormatTimeUseCase(currentTime)} --> ${getFormatTimeUseCase(endTime)}\n")
                 out.write("$type: $values\n\n")
 
-                previousTime = currentTime
                 index++
             }
         }
