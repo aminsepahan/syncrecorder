@@ -131,7 +131,7 @@ class RecordingViewModel @Inject constructor(
             saveService.addTask(
                 SaveTask(
                     videoName = "recorded_data_${currentCount}.mp4",
-                    outputName = "output_with_subtitles_${currentCount}.mp4",
+                    outputName = "output_with_subtitle_${currentCount}.mp4",
                     recordingCount = currentCount
                 )
             )
@@ -162,7 +162,7 @@ class RecordingViewModel @Inject constructor(
                     saveService.addTask(
                         SaveTask(
                             videoName = "recorded_data_${currentCount}.mp4",
-                            outputName = "output_with_subtitles_${currentCount}.mp4",
+                            outputName = "output_with_subtitle_${currentCount}.mp4",
                             recordingCount = currentCount
                         )
                     )

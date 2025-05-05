@@ -9,6 +9,7 @@ import android.hardware.camera2.CaptureRequest
 import android.media.MediaRecorder
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.view.Surface
 import com.appleader707.syncrecorder.business.usecase.convert.ConvertFrameTimestampToSrtUseCase
 import com.appleader707.syncrecorder.business.usecase.directory.GetSyncRecorderDirectoryUseCase
@@ -34,6 +35,7 @@ class Camera2Recorder @Inject constructor(
     private var outputFile: File? = null
     private var finalizeCallback: (() -> Unit)? = null
 
+    private var cameraStartTimestamp: Long = 0L
     private val frameTimestamps = mutableListOf<Long>()
 
     private val cameraId: String by lazy {
@@ -119,7 +121,14 @@ class Camera2Recorder @Inject constructor(
                     frameNumber: Long
                 ) {
                     if (!didSendStart) {
-                        onStartTimestamp(timestamp)
+                        val elapsedNow = SystemClock.elapsedRealtimeNanos()
+                        val nanoNow = System.nanoTime()
+                        val bootOffset = elapsedNow - nanoNow
+                        val frameTimestampElapsed = timestamp + bootOffset
+
+                        cameraStartTimestamp = frameTimestampElapsed
+
+                        onStartTimestamp(frameTimestampElapsed) // بر مبنای elapsedRealtimeNanos
                         didSendStart = true
                     }
 
@@ -140,9 +149,12 @@ class Camera2Recorder @Inject constructor(
                 val frameLogFile = File(getSyncRecorderDirectoryUseCase(), "frame_timestamps.txt")
                 frameLogFile.bufferedWriter().use { writer ->
                     writer.write("index,timestamp_ms\n")
+
+                    val bootOffset = SystemClock.elapsedRealtimeNanos() - System.nanoTime()
                     frameTimestamps.forEachIndexed { index, timestamp ->
-                        val timeStampsRead = timestamp / 1_000_000L
-                        writer.write("${index + 1},$timeStampsRead\n")
+                        val alignedTimestamp = timestamp + bootOffset
+                        val timeMs = alignedTimestamp - cameraStartTimestamp
+                        writer.write("${index + 1},${timeMs / 1_000_000}\n")
                     }
                 }
                 convertFrameTimestampToSrtUseCase(

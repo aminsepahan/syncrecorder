@@ -13,38 +13,26 @@ class EmbedSubtitleIntoVideoUseCase @Inject constructor(
 ) {
     operator fun invoke(
         videoNameFile: String,
-        subtitleNameFiles: List<String>,
+        subtitleNameFile: String,
         outputNameFile: String
     ) {
         val videoFile = File(getSyncRecorderDirectoryUseCase(), videoNameFile)
+        val subtitleFile = File(getSyncRecorderDirectoryUseCase(), subtitleNameFile)
         val outputFile = File(getSyncRecorderDirectoryUseCase(), outputNameFile)
 
-        val cmd = mutableListOf(
+        if (!subtitleFile.exists()) {
+            Timber.tag(TAG).e("❌ Subtitle file not found: $subtitleNameFile")
+            return
+        }
+
+        val cmd = listOf(
             "-y",
-            "-i", videoFile.absolutePath
+            "-i", videoFile.absolutePath,
+            "-vf", "subtitles=${subtitleFile.absolutePath.replace(" ", "\\ ")}",
+            "-c:v", "libx264",
+            "-c:a", "copy",
+            outputFile.absolutePath
         )
-
-        subtitleNameFiles.forEach { subtitleFile ->
-            val subtitleFilePath = File(getSyncRecorderDirectoryUseCase(), subtitleFile).absolutePath
-            cmd.add("-i")
-            cmd.add(subtitleFilePath)
-        }
-
-        cmd.add("-map")
-        cmd.add("0:v:0")
-        subtitleNameFiles.forEachIndexed { index, _ ->
-            cmd.add("-map")
-            cmd.add("${index + 1}:s:0")
-        }
-
-        cmd.add("-c:v")
-        cmd.add("copy")
-        cmd.add("-c:a")
-        cmd.add("copy")
-        cmd.add("-c:s")
-        cmd.add("mov_text")
-
-        cmd.add(outputFile.absolutePath)
 
         FFmpegKit.executeAsync(cmd.joinToString(" ")) { session ->
             val returnCode = session.returnCode

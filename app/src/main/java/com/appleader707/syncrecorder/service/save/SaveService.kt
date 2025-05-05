@@ -27,15 +27,10 @@ class SaveService @Inject constructor(
         scope.launch(Dispatchers.IO) {
             for (task in queue) {
                 try {
-                    val subtitleFiles = listOf(
-                        "accelerometer_data_${task.recordingCount}.srt",
-                        "gyroscope_data_${task.recordingCount}.srt",
-                        "magnetometer_data_${task.recordingCount}.srt"
-                    )
-
+                    val subtitleFile = "sensor_data_${task.recordingCount}.srt"
                     embedSubtitleIntoVideoUseCase(
                         task.videoName,
-                        subtitleFiles,
+                        subtitleFile,
                         task.outputName
                     )
 
