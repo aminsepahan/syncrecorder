@@ -1,56 +1,22 @@
 package com.appleader707.syncrecorder.service.sensor
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
 
 class SensorService @Inject constructor(
-    private val accelerometerService: AccelerometerService,
-    private val gyroscopeService: GyroscopeService,
-    private val magnetometerService: MagnetometerService
+    private val unifiedSensorService: UnifiedSensorService,
+    private val aggregator: SensorDataAggregator,
 ) {
     fun startSensors(
-        recordingCount: Int,
-        recordingStartNanos: Long,
+        startTimeStamp: Long,
         imuFrequency: Int
     ) {
-        CoroutineScope(Dispatchers.IO).launch {
-            accelerometerService.startAccelerometerSensor(
-                recordingCount = recordingCount,
-                recordingStartNanos = recordingStartNanos,
-                imuFrequency = imuFrequency
-            )
-        }
-
-        CoroutineScope(Dispatchers.IO).launch {
-            gyroscopeService.startGyroscopeSensor(
-                recordingCount = recordingCount,
-                recordingStartNanos = recordingStartNanos,
-                imuFrequency = imuFrequency
-            )
-        }
-
-        CoroutineScope(Dispatchers.IO).launch {
-            magnetometerService.startMagnetometerSensor(
-                recordingCount = recordingCount,
-                recordingStartNanos = recordingStartNanos,
-                imuFrequency = imuFrequency
-            )
-        }
+        aggregator.setRecordingStartTime(startTimeStamp)
+        unifiedSensorService.startSensors(imuFrequency)
     }
 
-    fun stopSensors(recordingCount: Int) {
-        CoroutineScope(Dispatchers.IO).launch {
-            accelerometerService.stopAccelerometerSensor(recordingCount)
-        }
-
-        CoroutineScope(Dispatchers.IO).launch {
-            gyroscopeService.stopGyroscopeSensor(recordingCount)
-        }
-
-        CoroutineScope(Dispatchers.IO).launch {
-            magnetometerService.stopMagnetometerSensor(recordingCount)
-        }
+    suspend fun stopSensors(recordingCount: Int) = coroutineScope {
+        unifiedSensorService.stopSensors()
+        aggregator.saveToJsonFile(recordingCount)
     }
 }

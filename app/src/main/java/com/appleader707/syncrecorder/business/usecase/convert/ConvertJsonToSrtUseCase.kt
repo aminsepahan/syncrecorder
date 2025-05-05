@@ -12,37 +12,39 @@ class ConvertJsonToSrtUseCase @Inject constructor(
     private val getSyncRecorderDirectoryUseCase: GetSyncRecorderDirectoryUseCase,
     private val getFormatTimeUseCase: GetFormatTimeUseCase,
 ) {
-    operator fun invoke(sensorFileJsonName: String, sensorFileSrtName: String) {
-        val sensorFileJson = File(getSyncRecorderDirectoryUseCase(), sensorFileJsonName)
-        val sensorFileSrt = File(getSyncRecorderDirectoryUseCase(), sensorFileSrtName)
+    operator fun invoke(recordingCount: Int) {
+        val sensorFileJson = File(getSyncRecorderDirectoryUseCase(), "sensor_data_$recordingCount.json")
+        val sensorFileSrt = File(getSyncRecorderDirectoryUseCase(), "sensor_data_$recordingCount.srt")
+
+        if (!sensorFileJson.exists()) return
 
         val json = sensorFileJson.readText()
         val data = Gson().fromJson(json, Array<SensorSnapshot>::class.java)
 
         if (data.isEmpty()) return
 
-        val baseTime = data.first().timestampMills   // first timestamp
+        val baseTime = data.first().timestampMillis
 
-        return sensorFileSrt.bufferedWriter().use { out ->
+        sensorFileSrt.bufferedWriter().use { out ->
             var index = 1
 
             data.forEach { snapshot ->
-                val currentTime = snapshot.timestampMills - baseTime
-                val displayDuration = 50L // At least 50 milliseconds to be visible in the player
+                val currentTime = snapshot.timestampMillis - baseTime
+                val displayDuration = 1L
                 val endTime = currentTime + displayDuration
 
                 val values = snapshot.values.joinToString(",") { "%.5f".format(it) }
-                val type = when (snapshot.type) {
+                val label = when (snapshot.type) {
                     Sensor.TYPE_ACCELEROMETER -> "ACC"
                     Sensor.TYPE_GYROSCOPE -> "GYRO"
                     Sensor.TYPE_MAGNETIC_FIELD -> "MAG"
                     Sensor.TYPE_LINEAR_ACCELERATION -> "L_ACC"
-                    else -> "SENSOR_${snapshot.type}"
+                    else -> snapshot.name.uppercase()
                 }
 
                 out.write("$index\n")
                 out.write("${getFormatTimeUseCase(currentTime)} --> ${getFormatTimeUseCase(endTime)}\n")
-                out.write("$type: $values\n\n")
+                out.write("$label: $values\n\n")
 
                 index++
             }
