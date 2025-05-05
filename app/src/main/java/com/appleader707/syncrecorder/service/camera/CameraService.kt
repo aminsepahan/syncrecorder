@@ -1,15 +1,11 @@
 package com.appleader707.syncrecorder.service.camera
 
 import android.content.Context
-import androidx.camera.core.Preview
-import androidx.camera.video.FileOutputOptions
-import androidx.camera.video.Recording
-import androidx.camera.video.VideoRecordEvent
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.LifecycleOwner
+import android.view.Surface
 import com.appleader707.syncrecorder.TAG
 import com.appleader707.syncrecorder.business.usecase.directory.GetSyncRecorderDirectoryUseCase
 import com.appleader707.syncrecorder.domain.RecordingSettings
+import com.appleader707.syncrecorder.service.sensor.SensorService
 import kotlinx.coroutines.CompletableDeferred
 import timber.log.Timber
 import java.io.File
@@ -17,69 +13,50 @@ import javax.inject.Inject
 
 class CameraService @Inject constructor(
     private val getSyncRecorderDirectoryUseCase: GetSyncRecorderDirectoryUseCase,
-    private val cameraController: CameraController
+    private val camera2Recorder: Camera2Recorder,
+    private val sensorService: SensorService
 ) {
-    private var recording: Recording? = null
-    private var onFinalizeCallback: (() -> Unit)? = null
     private var finalizeDeferred: CompletableDeferred<Unit>? = null
 
-    suspend fun startRecording(
+    suspend fun startRecordingAndSensors(
         context: Context,
-        lifecycleOwner: LifecycleOwner,
-        surfaceProvider: Preview.SurfaceProvider,
+        surface: Surface,
         recordingCount: Int,
         recordingSettings: RecordingSettings,
         finalizeVideo: () -> Unit
     ) {
+        val directory = getSyncRecorderDirectoryUseCase()
+        val videoFile = File(directory, "recorded_data_${recordingCount}.mp4")
+
+        finalizeDeferred = CompletableDeferred()
+
         val quality = recordingSettings.getQuality()
         val frameRate = recordingSettings.frameRate
         val autoFocus = recordingSettings.autoFocus
         val stabilization = recordingSettings.stabilization
 
-        val directoryRecord = getSyncRecorderDirectoryUseCase()
-        val videoFile = File(directoryRecord, "recorded_data_${recordingCount}.mp4")
-        val outputOptions = FileOutputOptions.Builder(videoFile).build()
-
-        cameraController.initializeCamera(
-            context = context,
-            lifecycleOwner = lifecycleOwner,
-            surfaceProvider = surfaceProvider,
-            quality = quality,
-            frameRate = frameRate,
-            autoFocus = autoFocus,
-            stabilization = stabilization,
-        )
-
-        val videoCapture = cameraController.getVideoCapture() ?: return
-
-        finalizeDeferred = CompletableDeferred()
-        onFinalizeCallback = {
-            Timber.tag(TAG).d("✅ Finalize callback called.")
-            finalizeVideo()
-            finalizeDeferred?.complete(Unit)
-        }
-
-        recording = videoCapture.output
-            .prepareRecording(context, outputOptions)
-            .withAudioEnabled()
-            .start(ContextCompat.getMainExecutor(context)) { recordEvent ->
-                when (recordEvent) {
-                    is VideoRecordEvent.Start -> {
-                        Timber.tag(TAG).d("Recording started")
-                    }
-
-                    is VideoRecordEvent.Finalize -> {
-                        Timber.tag(TAG).d("Recording finalized")
-                        onFinalizeCallback?.invoke()
-                    }
-                }
+        camera2Recorder.startRecording(
+            surface = surface,
+            outputFile = videoFile,
+            settings = recordingSettings,
+            onStartTimestamp = { timestamp ->
+                Timber.tag(TAG).d("🎥 Recording start timestamp: $timestamp")
+                sensorService.startSensors(
+                    startTimeStamp = timestamp,
+                    imuFrequency = recordingSettings.getImuSensorDelay()
+                )
+            },
+            onFinalize = {
+                Timber.tag(TAG).d("✅ Finalize callback called.")
+                finalizeVideo()
+                finalizeDeferred?.complete(Unit)
             }
+        )
     }
 
     suspend fun stopRecordingAndWait() {
         Timber.tag(TAG).d("⏹️ Stopping recording...")
-        recording?.stop()
-        recording = null
+        camera2Recorder.stopRecording()
         finalizeDeferred?.await()
         Timber.tag(TAG).d("✅ Recording stopped and finalized.")
     }

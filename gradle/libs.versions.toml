@@ -1,6 +1,6 @@
 [versions]
-agp = "8.11.0-alpha08"
-cameraX = "1.5.0-alpha06"
+agp = "8.11.0-alpha09"
+camera-core = "1.4.2"
 ffmpegKitFullGpl = "6.0-2"
 gson = "2.13.1"
 kotlin = "2.1.20"
@@ -24,12 +24,7 @@ workRuntimeKtx = "2.10.1"
 datastorePreferences = "1.1.4"
 
 [libraries]
-androidx-camera-extensions = { module = "androidx.camera:camera-extensions", version.ref = "cameraX" }
-androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "cameraX" }
-androidx-camera-video = { module = "androidx.camera:camera-video", version.ref = "cameraX" }
-androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "cameraX" }
-androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraX" }
-androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "cameraX" }
+androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "camera-core" }
 androidx-compiler = { module = "androidx.compose.compiler:compiler", version.ref = "compiler" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
