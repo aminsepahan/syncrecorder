@@ -1,8 +1,7 @@
 package com.appleader707.syncrecorder.presentation.ui.recording
 
 import android.content.Context
-import androidx.camera.core.Preview
-import androidx.lifecycle.LifecycleOwner
+import android.view.Surface
 import com.appleader707.common.ui.base.BaseViewEvent
 import com.appleader707.syncrecorder.domain.RecordingSettings
 
@@ -14,8 +13,7 @@ import com.appleader707.syncrecorder.domain.RecordingSettings
 sealed class RecordingViewEvent : BaseViewEvent {
     data class ToggleRecording(
         val context: Context,
-        val lifecycleOwner: LifecycleOwner,
-        val surfaceProvider: Preview.SurfaceProvider
+        val cameraSurface: Surface
     ) : RecordingViewEvent()
 
     data class SaveSettings(val settings: RecordingSettings) : RecordingViewEvent()

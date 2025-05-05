@@ -13,7 +13,6 @@ data class RecordingViewState(
     val durationMillis: Long = 0L,
     val settingsDialogVisible: Boolean = false,
     val settingsState: RecordingSettings = RecordingSettings(),
-    var recordingStartNanos: Long = 0,
     var recordingCount: Int = 1
 ) : BaseViewState {
     val formattedDuration: String

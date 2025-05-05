@@ -2,7 +2,6 @@ package com.appleader707.syncrecorder.domain
 
 import android.hardware.SensorManager
 import androidx.annotation.Keep
-import androidx.camera.video.Quality
 
 @Keep
 data class RecordingSettings(
@@ -13,12 +12,12 @@ data class RecordingSettings(
     val imuFrequency: Int = 100
 ) {
     fun getQuality() = when (resolution) {
-        "480p" -> Quality.SD
-        "720p" -> Quality.HD
-        "1080p" -> Quality.FHD
-        "4K" -> Quality.UHD
-        else -> Quality.HD
-    }!!
+        "480p" -> 1
+        "720p" -> 2
+        "1080p" -> 3
+        "4K" -> 4
+        else -> 1
+    }
 
     fun getImuSensorDelay() = when (imuFrequency) {
         10 -> SensorManager.SENSOR_DELAY_UI
