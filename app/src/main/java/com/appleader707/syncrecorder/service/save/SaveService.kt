@@ -1,7 +1,6 @@
 package com.appleader707.syncrecorder.service.save
 
 import com.appleader707.syncrecorder.TAG
-import com.appleader707.syncrecorder.business.usecase.convert.ConvertFrameTimestampToSrtUseCase
 import com.appleader707.syncrecorder.business.usecase.convert.EmbedSubtitleIntoVideoUseCase
 import com.appleader707.syncrecorder.business.usecase.directory.GetSyncRecorderDirectoryUseCase
 import com.appleader707.syncrecorder.domain.SaveTask
@@ -15,7 +14,6 @@ import javax.inject.Inject
 
 class SaveService @Inject constructor(
     private val embedSubtitleIntoVideoUseCase: EmbedSubtitleIntoVideoUseCase,
-    private val convertFrameTimestampToSrtUseCase: ConvertFrameTimestampToSrtUseCase,
     private val getSyncRecorderDirectoryUseCase: GetSyncRecorderDirectoryUseCase,
     //private val videoCompressionUseCase: VideoCompressionUseCase,
 ) {
@@ -29,11 +27,6 @@ class SaveService @Inject constructor(
         scope.launch(Dispatchers.IO) {
             for (task in queue) {
                 try {
-                    convertFrameTimestampToSrtUseCase(
-                        inputTxtName = "frame_timestamps.txt",
-                        outputSrtName = "frame_data_${task.recordingCount}.srt"
-                    )
-
                     val subtitleFiles = listOf(
                         "accelerometer_data_${task.recordingCount}.srt",
                         "gyroscope_data_${task.recordingCount}.srt",

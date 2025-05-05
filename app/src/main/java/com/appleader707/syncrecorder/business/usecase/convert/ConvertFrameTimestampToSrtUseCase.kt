@@ -25,7 +25,7 @@ class ConvertFrameTimestampToSrtUseCase @Inject constructor(
 
         // Parse timestamps
         val timestamps = lines.mapNotNull { line ->
-            val parts = line.split(":")
+            val parts = line.split(",")
             if (parts.size == 2) {
                 parts[1].trim().toLongOrNull()
             } else null

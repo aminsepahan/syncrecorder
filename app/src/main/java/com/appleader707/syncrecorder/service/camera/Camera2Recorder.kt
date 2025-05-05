@@ -10,6 +10,7 @@ import android.media.MediaRecorder
 import android.os.Handler
 import android.os.Looper
 import android.view.Surface
+import com.appleader707.syncrecorder.business.usecase.convert.ConvertFrameTimestampToSrtUseCase
 import com.appleader707.syncrecorder.business.usecase.directory.GetSyncRecorderDirectoryUseCase
 import com.appleader707.syncrecorder.domain.RecordingSettings
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,6 +26,7 @@ import kotlin.coroutines.resumeWithException
 class Camera2Recorder @Inject constructor(
     @ApplicationContext private val context: Context,
     private val getSyncRecorderDirectoryUseCase: GetSyncRecorderDirectoryUseCase,
+    private val convertFrameTimestampToSrtUseCase: ConvertFrameTimestampToSrtUseCase,
 ) {
     private var cameraDevice: CameraDevice? = null
     private var mediaRecorder: MediaRecorder? = null
@@ -61,7 +63,7 @@ class Camera2Recorder @Inject constructor(
         val surfaces = listOf(surface, recorderSurface)
 
         val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        val cameraOpen = suspendCancellableCoroutine<CameraDevice> { continuation ->
+        val cameraOpen = suspendCancellableCoroutine { continuation ->
             cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
                 override fun onOpened(camera: CameraDevice) {
                     continuation.resume(camera)
@@ -81,7 +83,7 @@ class Camera2Recorder @Inject constructor(
 
         cameraDevice = cameraOpen
 
-        val session = suspendCancellableCoroutine<CameraCaptureSession> { continuation ->
+        val session = suspendCancellableCoroutine { continuation ->
             cameraDevice?.createCaptureSession(
                 surfaces,
                 object : CameraCaptureSession.StateCallback() {
@@ -99,28 +101,33 @@ class Camera2Recorder @Inject constructor(
 
         captureSession = session
 
-        val captureRequest = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
-            addTarget(surface)
-            addTarget(recorderSurface)
-        }
+        val captureRequest =
+            cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
+                addTarget(surface)
+                addTarget(recorderSurface)
+            }
 
         var didSendStart = false
 
-        session.setRepeatingRequest(captureRequest.build(), object : CameraCaptureSession.CaptureCallback() {
-            override fun onCaptureStarted(
-                session: CameraCaptureSession,
-                request: CaptureRequest,
-                timestamp: Long,
-                frameNumber: Long
-            ) {
-                if (!didSendStart) {
-                    onStartTimestamp(timestamp)
-                    didSendStart = true
-                }
+        session.setRepeatingRequest(
+            captureRequest.build(),
+            object : CameraCaptureSession.CaptureCallback() {
+                override fun onCaptureStarted(
+                    session: CameraCaptureSession,
+                    request: CaptureRequest,
+                    timestamp: Long,
+                    frameNumber: Long
+                ) {
+                    if (!didSendStart) {
+                        onStartTimestamp(timestamp)
+                        didSendStart = true
+                    }
 
-                frameTimestamps.add(timestamp)
-            }
-        }, Handler(Looper.getMainLooper()))
+                    frameTimestamps.add(timestamp)
+                }
+            },
+            Handler(Looper.getMainLooper())
+        )
 
         mediaRecorder?.start()
     }
@@ -138,6 +145,10 @@ class Camera2Recorder @Inject constructor(
                         writer.write("${index + 1},$timeStampsRead\n")
                     }
                 }
+                convertFrameTimestampToSrtUseCase(
+                    inputTxtName = "frame_timestamps.txt",
+                    outputSrtName = "frame_data.srt"
+                )
 
                 reset()
 
