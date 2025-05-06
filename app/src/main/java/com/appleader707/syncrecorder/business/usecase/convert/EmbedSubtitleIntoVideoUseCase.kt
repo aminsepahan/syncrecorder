@@ -2,6 +2,7 @@ package com.appleader707.syncrecorder.business.usecase.convert
 
 import com.appleader707.syncrecorder.TAG
 import com.appleader707.syncrecorder.business.usecase.directory.GetSyncRecorderDirectoryUseCase
+import com.appleader707.syncrecorder.extension.Helper
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
 import timber.log.Timber
@@ -38,6 +39,7 @@ class EmbedSubtitleIntoVideoUseCase @Inject constructor(
             val returnCode = session.returnCode
             if (ReturnCode.isSuccess(returnCode)) {
                 Timber.tag(TAG).d("✅ Subtitle embedded successfully into video.")
+                Helper.showMessage("Subtitle embedded successfully into video.")
             } else {
                 Timber.tag(TAG).e("❌ FFmpeg failed: ${session.failStackTrace}")
             }
