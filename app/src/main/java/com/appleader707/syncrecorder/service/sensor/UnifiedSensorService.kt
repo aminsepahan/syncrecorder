@@ -31,10 +31,10 @@ class UnifiedSensorService @Inject constructor(
     fun startSensors(
         imuFrequency: Int
     ) {
-        //startSensor(Sensor.TYPE_ACCELEROMETER, "accelerometer", imuFrequency)
-        //startSensor(Sensor.TYPE_GYROSCOPE, "gyroscope", imuFrequency)
-        //startSensor(Sensor.TYPE_MAGNETIC_FIELD, "magnetometer", imuFrequency)
         startSensor(Sensor.TYPE_ACCELEROMETER, "accelerometer", imuFrequency)
+        startSensor(Sensor.TYPE_GYROSCOPE, "gyroscope", imuFrequency)
+        startSensor(Sensor.TYPE_MAGNETIC_FIELD, "magnetometer", imuFrequency)
+        //startSensor(Sensor.TYPE_ACCELEROMETER, "accelerometer", imuFrequency)
     }
 
     private fun startSensor(type: Int, name: String, delay: Int) {

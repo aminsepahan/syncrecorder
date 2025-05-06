@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +50,10 @@ fun RecordingScreen(
 
             RecordingViewEffect.RecordingStopped -> {
                 Helper.showMessage("Recording stoped.")
+            }
+
+            RecordingViewEffect.NavigateToShowByChart -> {
+                router?.goShowByChart()
             }
         }
 
@@ -131,6 +136,15 @@ fun RecordingLayout(
                 tint = Color.White,
                 modifier = Modifier.size(36.dp)
             )
+        }
+
+        Button(
+            onClick = { onEventHandler(RecordingViewEvent.NavigateToShowByChart) },
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(start = 16.dp, bottom = 70.dp)
+        ) {
+            Text("Show Chart")
         }
 
         AnimatedVisibility(viewState.settingsDialogVisible && !viewState.isRecording) {

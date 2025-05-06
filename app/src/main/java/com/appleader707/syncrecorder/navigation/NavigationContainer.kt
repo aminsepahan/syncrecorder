@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.appleader707.syncrecorder.presentation.ui.permission.PermissionScreen
 import com.appleader707.syncrecorder.presentation.ui.recording.RecordingScreen
+import com.appleader707.syncrecorder.presentation.ui.show_by_chart.ShowByChartScreen
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -40,6 +41,9 @@ fun NavigationContainer(
         }
         composable(Screen.Permission.route) {
             PermissionScreen(router)
+        }
+        composable(Screen.ShowByChart.route) {
+            ShowByChartScreen(router)
         }
     }
 }

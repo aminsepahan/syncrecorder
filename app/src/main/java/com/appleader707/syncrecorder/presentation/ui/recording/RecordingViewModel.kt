@@ -88,6 +88,10 @@ class RecordingViewModel @Inject constructor(
                     updateState { it.copy(settingsState = settingsState) }
                 }
             }
+
+            RecordingViewEvent.NavigateToShowByChart -> {
+                effect.postValue(RecordingViewEffect.NavigateToShowByChart)
+            }
         }
     }
 

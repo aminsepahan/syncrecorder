@@ -106,4 +106,11 @@ dependencies {
 
     //==================== Gson ====================
     implementation(libs.gson)
+
+    //==================== Exoplayer ====================
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
+
+    //==================== Charts For Compose ====================
+    implementation(libs.mpandroidchart)
 }
