@@ -1,6 +1,7 @@
 package com.appleader707.syncrecorder.service.sensor
 
 import android.hardware.SensorEvent
+import android.os.SystemClock
 import com.appleader707.syncrecorder.business.usecase.convert.ConvertJsonToSrtUseCase
 import com.appleader707.syncrecorder.business.usecase.directory.GetSyncRecorderDirectoryUseCase
 import com.appleader707.syncrecorder.domain.SensorSnapshot
@@ -25,7 +26,9 @@ class SensorDataAggregator @Inject constructor(
     }
 
     fun recordEvent(type: Int, name: String, event: SensorEvent) {
-        val relativeTimeMillis = (event.timestamp - timeStamp) / 1_000_000
+        val bootOffset = SystemClock.elapsedRealtimeNanos() - System.nanoTime()
+        val eventElapsed = event.timestamp + bootOffset
+        val relativeTimeMillis = (eventElapsed - timeStamp) / 1_000_000
 
         val snapshot = SensorSnapshot(
             type = type,
