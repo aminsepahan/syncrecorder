@@ -1,5 +1,6 @@
 package com.appleader707.syncrecorder.service.camera
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
@@ -23,6 +24,7 @@ import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+@Suppress("DEPRECATION")
 @Singleton
 class Camera2Recorder @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -47,6 +49,7 @@ class Camera2Recorder @Inject constructor(
         }
     }
 
+    @SuppressLint("MissingPermission")
     suspend fun startRecording(
         surface: Surface,
         outputFile: File,
@@ -128,7 +131,7 @@ class Camera2Recorder @Inject constructor(
 
                         cameraStartTimestamp = frameTimestampElapsed
 
-                        onStartTimestamp(frameTimestampElapsed) // بر مبنای elapsedRealtimeNanos
+                        onStartTimestamp(frameTimestampElapsed) // based on elapsedRealtimeNanos
                         didSendStart = true
                     }
 

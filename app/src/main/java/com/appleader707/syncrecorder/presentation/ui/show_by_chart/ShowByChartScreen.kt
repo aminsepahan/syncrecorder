@@ -108,7 +108,7 @@ fun ShowByChartLayout(
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 100.dp)
         ) {
-            Text("نمایش نمودارها")
+            Text("show charts")
         }
 
         // Bottom Sheet
@@ -162,7 +162,7 @@ fun ShowByChartLayout(
                             isBottomSheetVisible = false
                         }
                     }) {
-                        Text("بستن")
+                        Text("close")
                     }
                 }
             }
