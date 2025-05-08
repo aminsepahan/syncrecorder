@@ -15,8 +15,10 @@ class RecordingSettingsPreferences @Inject constructor(
     companion object {
         val KEY_RESOLUTION = stringPreferencesKey("resolution")
         val KEY_FRAME_RATE = intPreferencesKey("frame_rate")
+        val KEY_CODEC = stringPreferencesKey("codec")
         val KEY_AUTO_FOCUS = booleanPreferencesKey("auto_focus")
         val KEY_STABILIZATION = booleanPreferencesKey("stabilization")
+        val KEY_AUDIO_SOURCE = stringPreferencesKey("audio_source")
         val KEY_IMU_FREQ = intPreferencesKey("imu_freq")
     }
 
@@ -25,8 +27,10 @@ class RecordingSettingsPreferences @Inject constructor(
         return RecordingSettings(
             resolution = prefs[KEY_RESOLUTION] ?: "720p",
             frameRate = prefs[KEY_FRAME_RATE] ?: 30,
+            codec = prefs[KEY_CODEC] ?: "H264",
             autoFocus = prefs[KEY_AUTO_FOCUS] ?: true,
             stabilization = prefs[KEY_STABILIZATION] ?: true,
+            audioSource = prefs[KEY_AUDIO_SOURCE] ?: "MIC",
             imuFrequency = prefs[KEY_IMU_FREQ] ?: 100
         )
     }
@@ -36,8 +40,10 @@ class RecordingSettingsPreferences @Inject constructor(
             it.toMutablePreferences().apply {
                 this[KEY_RESOLUTION] = settings.resolution
                 this[KEY_FRAME_RATE] = settings.frameRate
+                this[KEY_CODEC] = settings.codec
                 this[KEY_AUTO_FOCUS] = settings.autoFocus
                 this[KEY_STABILIZATION] = settings.stabilization
+                this[KEY_AUDIO_SOURCE] = settings.audioSource
                 this[KEY_IMU_FREQ] = settings.imuFrequency
             }
         }

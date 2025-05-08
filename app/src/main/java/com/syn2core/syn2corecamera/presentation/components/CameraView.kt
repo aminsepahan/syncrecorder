@@ -13,6 +13,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 @Composable
 fun CameraView(
     modifier: Modifier = Modifier,
+    resolution: Pair<Int, Int>,
     onSurfaceReady: (Surface) -> Unit
 ) {
     AndroidView(
@@ -21,7 +22,7 @@ fun CameraView(
 
             textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
                 override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
-                    configureTransform(textureView, width, height)
+                    configureTransform(textureView, width, height, resolution)
                     onSurfaceReady(Surface(surface))
                 }
 
@@ -41,11 +42,10 @@ fun CameraView(
     )
 }
 
-private fun configureTransform(view: TextureView, viewWidth: Int, viewHeight: Int) {
+private fun configureTransform(view: TextureView, viewWidth: Int, viewHeight: Int, resolution: Pair<Int, Int>) {
     val matrix = Matrix()
 
-    val previewWidth = 1080
-    val previewHeight = 1920
+    val (previewWidth, previewHeight) = resolution
 
     matrix.postRotate(270f, viewWidth / 2f, viewHeight / 2f)
 

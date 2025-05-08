@@ -172,15 +172,17 @@ class Camera2Recorder @Inject constructor(
     }
 
     private fun setupMediaRecorder(file: File, settings: RecordingSettings) {
+        val (width, height) = settings.getResolutionSize()
+
         mediaRecorder = MediaRecorder().apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setAudioSource(settings.getAudioSource())
             setVideoSource(MediaRecorder.VideoSource.SURFACE)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             setOutputFile(file.absolutePath)
             setVideoEncodingBitRate(10000000)
             setVideoFrameRate(settings.frameRate)
-            //setVideoSize(1920, 1080)
-            setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+            setVideoSize(width, height)
+            setVideoEncoder(settings.getCodec())
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
             prepare()
         }

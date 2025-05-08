@@ -84,8 +84,10 @@ fun RecordingLayout(
     val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
+        val resolution = viewState.settingsState.getResolutionSize()
         CameraView(
             modifier = Modifier.fillMaxSize(),
+            resolution = resolution,
             onSurfaceReady = {
                 viewModel.updateSurface(it)
             }
@@ -122,7 +124,11 @@ fun RecordingLayout(
             Spacer(Modifier.width(10.dp))
 
             IconButton(
-                onClick = { onEventHandler(RecordingViewEvent.NavigateToShowByChart) },
+                onClick = {
+                    if (!viewState.isRecording) {
+                        onEventHandler(RecordingViewEvent.NavigateToShowByChart)
+                    }
+                },
                 modifier = Modifier
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)

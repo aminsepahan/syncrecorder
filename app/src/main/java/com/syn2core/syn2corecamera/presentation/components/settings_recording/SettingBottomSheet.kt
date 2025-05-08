@@ -39,8 +39,10 @@ fun SettingsBottomSheet(
 ) {
     var resolution by remember { mutableStateOf(initialSettings.resolution) }
     var frameRate by remember { mutableIntStateOf(initialSettings.frameRate) }
+    var codec by remember { mutableStateOf(initialSettings.codec) }
     var autoFocus by remember { mutableStateOf(initialSettings.autoFocus) }
     var stabilization by remember { mutableStateOf(initialSettings.stabilization) }
+    var audioSource by remember { mutableStateOf(initialSettings.audioSource) }
     var imuFrequency by remember { mutableIntStateOf(initialSettings.imuFrequency) }
 
     val windowHeight = with(LocalDensity.current) {
@@ -62,16 +64,38 @@ fun SettingsBottomSheet(
 
             // Resolution Dropdown
             DropdownSelector(
-                "Resolution",
-                listOf("480p", "720p", "1080p", "4K"),
-                resolution
+                label = "Resolution",
+                options = listOf("480p", "720p", "1080p", "4K"),
+                selectedOption = resolution
             ) { resolution = it }
 
             // Frame Rate
-            DropdownSelector("Frame Rate", listOf(24, 30, 60), frameRate) { frameRate = it }
+            DropdownSelector(
+                label = "Frame Rate",
+                options = listOf(24, 30, 60),
+                selectedOption = frameRate
+            ) { frameRate = it }
+
+            // Codec Dropdown
+            DropdownSelector(
+                label = "Video Codec",
+                options = listOf("H.264", "HEVC", "MPEG_4"),
+                selectedOption = codec
+            ) { codec = it }
+
+            // Audio Source
+            DropdownSelector(
+                label = "Audio Source",
+                options = listOf("MIC", "CAMCORDER", "VOICE_RECOGNITION"),
+                selectedOption = audioSource
+            ) { audioSource = it }
 
             // IMU Frequency
-            DropdownSelector("IMU Frequency", listOf(10, 50, 100), imuFrequency) {
+            DropdownSelector(
+                label = "IMU Frequency",
+                options = listOf(10, 50, 100),
+                selectedOption = imuFrequency
+            ) {
                 imuFrequency = it
             }
 
@@ -98,8 +122,10 @@ fun SettingsBottomSheet(
                         RecordingSettings(
                             resolution = resolution,
                             frameRate = frameRate,
+                            codec = codec,
                             autoFocus = autoFocus,
                             stabilization = stabilization,
+                            audioSource = audioSource,
                             imuFrequency = imuFrequency
                         )
                     )
