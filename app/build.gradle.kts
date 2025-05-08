@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace = "com.appleader707.syncrecorder"
+    namespace = "com.syn2core.syn2corecamera"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.appleader707.syncrecorder"
+        applicationId = "com.syn2core.syn2corecamera"
         minSdk = 30
         targetSdk = 36
         versionCode = 1

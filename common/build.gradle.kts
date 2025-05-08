@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.appleader707.common"
+    namespace = "com.syn2core.common"
     compileSdk = 36
 
     defaultConfig {

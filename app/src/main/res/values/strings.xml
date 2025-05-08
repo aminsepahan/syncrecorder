@@ -1,5 +1,5 @@
 <resources>
-  <string name="app_name">Sync Recorder</string>
+  <string name="app_name">Syn2Core Camera</string>
 
   <!--Message For Finish App-->
   <string name="back_exit_app">Press the back button again to exit.</string>
