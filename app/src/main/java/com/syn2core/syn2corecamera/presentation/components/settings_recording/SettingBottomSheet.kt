@@ -79,7 +79,7 @@ fun SettingsBottomSheet(
             // Codec Dropdown
             DropdownSelector(
                 label = "Video Codec",
-                options = listOf("H.264", "HEVC", "MPEG_4"),
+                options = listOf("H.264", "HEVC"),
                 selectedOption = codec
             ) { codec = it }
 

@@ -39,7 +39,6 @@ data class RecordingSettings(
     fun getCodec() = when (codec) {
         "H.264" -> MediaRecorder.VideoEncoder.H264
         "HEVC" -> MediaRecorder.VideoEncoder.HEVC
-        "MPEG_4" -> MediaRecorder.VideoEncoder.MPEG_4_SP
         else -> MediaRecorder.VideoEncoder.H264
     }
 }
