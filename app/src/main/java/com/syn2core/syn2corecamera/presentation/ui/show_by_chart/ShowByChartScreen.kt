@@ -1,6 +1,10 @@
 package com.syn2core.syn2corecamera.presentation.ui.show_by_chart
 
 import android.graphics.Color
+import android.view.View
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -8,10 +12,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AreaChart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -32,12 +41,12 @@ import androidx.lifecycle.asFlow
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-import com.syn2core.syn2corecamera.navigation.Router
-import com.syn2core.syn2corecamera.navigation.Screen
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import com.syn2core.syn2corecamera.navigation.Router
+import com.syn2core.syn2corecamera.navigation.Screen
 import kotlinx.coroutines.launch
 
 @Composable
@@ -78,9 +87,7 @@ fun ShowByChartLayout(
     val scope = rememberCoroutineScope()
     var isBottomSheetVisible by remember { mutableStateOf(false) }
 
-    // Main Layout
     Box(modifier = Modifier.fillMaxSize()) {
-        // Video Player
         viewState.videoUri?.let { uri ->
             AndroidView(
                 factory = { context ->
@@ -92,26 +99,44 @@ fun ShowByChartLayout(
                     PlayerView(context).apply {
                         this.player = player
                         useController = true
+                        setControllerVisibilityListener(
+                            PlayerView.ControllerVisibilityListener { visibility ->
+                                onEventHandler(
+                                    ShowByChartViewEvent.PlayerControlsVisibilityChanged(
+                                        visibility == View.VISIBLE
+                                    )
+                                )
+                            }
+                        )
                     }
                 },
                 modifier = Modifier.fillMaxSize()
             )
         }
 
-        // دکمه باز کردن Bottom Sheet
-        Button(
-            onClick = {
-                isBottomSheetVisible = true
-                scope.launch { bottomSheetState.show() }
-            },
+        AnimatedVisibility(
+            visible = viewState.showControls,
+            enter = slideInVertically { it },
+            exit = slideOutVertically { it },
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 100.dp)
+                .align(Alignment.BottomStart)
+                .padding(bottom = 6.dp, start = 112.dp)
         ) {
-            Text("show charts")
+            IconButton(
+                onClick = {
+                    isBottomSheetVisible = true
+                    scope.launch { bottomSheetState.show() }
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AreaChart,
+                    contentDescription = null,
+                    tint = androidx.compose.ui.graphics.Color.White,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
         }
 
-        // Bottom Sheet
         if (isBottomSheetVisible) {
             ModalBottomSheet(
                 onDismissRequest = {
@@ -120,7 +145,9 @@ fun ShowByChartLayout(
                     }
                 },
                 sheetState = bottomSheetState,
-                modifier = Modifier.fillMaxSize().padding(top = 52.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 52.dp),
                 containerColor = androidx.compose.ui.graphics.Color.LightGray,
             ) {
                 Column(

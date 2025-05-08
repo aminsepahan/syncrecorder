@@ -10,4 +10,5 @@ import com.syn2core.common.ui.base.BaseViewEvent
 sealed class ShowByChartViewEvent : BaseViewEvent {
     data object GoBackToRecordingPage: ShowByChartViewEvent()
     data object LoadData: ShowByChartViewEvent()
+    data class PlayerControlsVisibilityChanged(val visible: Boolean) : ShowByChartViewEvent()
 }

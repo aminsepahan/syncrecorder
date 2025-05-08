@@ -40,6 +40,10 @@ class ShowByChartViewModel @Inject constructor(
             ShowByChartViewEvent.GoBackToRecordingPage -> {
                 effect.postValue(ShowByChartViewEffect.GoBackRecordingPage)
             }
+
+            is ShowByChartViewEvent.PlayerControlsVisibilityChanged -> {
+                updateState { it.copy(showControls = event.visible) }
+            }
         }
     }
 
@@ -52,8 +56,10 @@ class ShowByChartViewModel @Inject constructor(
 
                 if (jsonFile.exists()) {
                     val jsonString = jsonFile.readText()
-                    val data: List<SensorSnapshot> = Gson().fromJson(jsonString,
-                        Array<SensorSnapshot>::class.java).toList()
+                    val data: List<SensorSnapshot> = Gson().fromJson(
+                        jsonString,
+                        Array<SensorSnapshot>::class.java
+                    ).toList()
 
                     val accelData = data.filter { it.name == "accelerometer" }
                     val gyroData = data.filter { it.name == "gyroscope" }

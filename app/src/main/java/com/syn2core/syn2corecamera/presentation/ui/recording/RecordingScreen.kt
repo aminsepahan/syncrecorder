@@ -3,15 +3,18 @@ package com.syn2core.syn2corecamera.presentation.ui.recording
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AreaChart
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -88,63 +91,76 @@ fun RecordingLayout(
             }
         )
 
-        IconButton(
-            onClick = { onEventHandler(RecordingViewEvent.ShowSettings) },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 37.dp, start = 16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "Settings",
-                tint = Color.White
-            )
-        }
-
         Text(
             text = viewState.formattedDuration,
             color = Color.White,
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 45.dp)
+                .padding(top = 20.dp)
         )
 
-        IconButton(
-            onClick = {
-                viewModel.getSurface()?.let { surface ->
-                    onEventHandler(
-                        RecordingViewEvent.ToggleRecording(
-                            context = context,
-                            cameraSurface = surface
-                        )
-                    )
-                }
-            },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 70.dp)
-                .size(60.dp)
-                .clip(CircleShape)
-                .background(
-                    if (viewState.isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                )
-        ) {
-            Icon(
-                imageVector = if (viewState.isRecording) Icons.Default.Stop else Icons.Default.FiberManualRecord,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(36.dp)
-            )
-        }
-
-        Button(
-            onClick = { onEventHandler(RecordingViewEvent.NavigateToShowByChart) },
+        Row(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(start = 16.dp, bottom = 70.dp)
+                .padding(start = 26.dp, bottom = 26.dp)
         ) {
-            Text("Show Chart")
+            IconButton(
+                onClick = { onEventHandler(RecordingViewEvent.ShowSettings) },
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+
+            Spacer(Modifier.width(10.dp))
+
+            IconButton(
+                onClick = { onEventHandler(RecordingViewEvent.NavigateToShowByChart) },
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AreaChart,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+
+            Spacer(Modifier.width(10.dp))
+
+            IconButton(
+                onClick = {
+                    viewModel.getSurface()?.let { surface ->
+                        onEventHandler(
+                            RecordingViewEvent.ToggleRecording(
+                                context = context,
+                                cameraSurface = surface
+                            )
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(
+                        if (viewState.isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                    )
+            ) {
+                Icon(
+                    imageVector = if (viewState.isRecording) Icons.Default.Stop else Icons.Default.FiberManualRecord,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
         }
 
         AnimatedVisibility(viewState.settingsDialogVisible && !viewState.isRecording) {

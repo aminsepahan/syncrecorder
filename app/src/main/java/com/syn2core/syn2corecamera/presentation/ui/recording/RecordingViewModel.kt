@@ -1,12 +1,12 @@
 package com.syn2core.syn2corecamera.presentation.ui.recording
 
-import android.content.Context
 import android.view.Surface
 import androidx.lifecycle.viewModelScope
 import com.syn2core.common.ui.base.BaseViewModel
 import com.syn2core.common.ui.livedata.SingleLiveData
 import com.syn2core.syn2corecamera.business.usecase.setting.GetRecordingSettingsUseCase
 import com.syn2core.syn2corecamera.business.usecase.setting.SetRecordingSettingsUseCase
+import com.syn2core.syn2corecamera.domain.RecordingSettings
 import com.syn2core.syn2corecamera.domain.SaveTask
 import com.syn2core.syn2corecamera.service.camera.CameraService
 import com.syn2core.syn2corecamera.service.durationmillis.DurationMillisService
@@ -14,7 +14,6 @@ import com.syn2core.syn2corecamera.service.save.SaveService
 import com.syn2core.syn2corecamera.service.sensor.SensorService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 /**
@@ -45,21 +45,20 @@ class RecordingViewModel @Inject constructor(
     val effect = SingleLiveData<RecordingViewEffect>()
 
     private var cameraSurface: Surface? = null
-
-    fun updateSurface(surface: Surface) { cameraSurface = surface }
-    fun getSurface(): Surface? = cameraSurface
-
     private var autoRestartJob: Job? = null
+
+    fun updateSurface(surface: Surface) {
+        cameraSurface = surface
+        cameraService.startPreview(surface)
+    }
+
+    fun getSurface(): Surface? = cameraSurface
 
     override fun processEvent(event: RecordingViewEvent) {
         when (event) {
             is RecordingViewEvent.ToggleRecording -> {
-                val isRecording = _state.value.isRecording
-                if (isRecording) {
-                    stopAll()
-                } else {
-                    startAll(event.context)
-                }
+                if (_state.value.isRecording) stopAll()
+                else startAll()
             }
 
             RecordingViewEvent.ShowSettings -> {
@@ -95,37 +94,36 @@ class RecordingViewModel @Inject constructor(
         }
     }
 
-    fun startAll(
-        context: Context,
-    ) {
+    fun startAll() {
         viewModelScope.launch {
-            cameraSurface?.let { surface ->
-                val recordingSettings = getRecordingSettingsUseCase()
-
-                cameraService.startRecordingAndSensors(
-                    context = context,
-                    surface = surface,
-                    recordingCount = _state.value.recordingCount,
-                    recordingSettings = recordingSettings,
-                    finalizeVideo = { }
-                )
-
-                durationMillisService.start(viewModelScope) { newDuration ->
-                    updateState { it.copy(durationMillis = newDuration) }
-                }
-
-                saveService.startService(viewModelScope)
-
-                startAutoRestartLoop(context)
-
-                updateState { it.copy(isRecording = true, durationMillis = 0L) }
-
-                effect.postValue(RecordingViewEffect.RecordingStarted)
+            val surface = cameraSurface
+            if (surface == null) {
+                Timber.w("🚫 Cannot start recording: Surface is null")
+                return@launch
             }
+
+            val settings = getRecordingSettingsUseCase()
+
+            cameraService.startRecordingAndSensors(
+                surface = surface,
+                recordingCount = _state.value.recordingCount,
+                recordingSettings = settings,
+                finalizeVideo = {}
+            )
+
+            durationMillisService.start(viewModelScope) { newDuration ->
+                updateState { it.copy(durationMillis = newDuration) }
+            }
+
+            saveService.startService(viewModelScope)
+            startAutoRestartLoop(surface, settings)
+
+            updateState { it.copy(isRecording = true, durationMillis = 0L) }
+            effect.postValue(RecordingViewEffect.RecordingStarted)
         }
     }
 
-    fun stopAll() {
+    private fun stopAll() {
         viewModelScope.launch {
             val currentCount = _state.value.recordingCount
 
@@ -144,42 +142,47 @@ class RecordingViewModel @Inject constructor(
             autoRestartJob = null
             durationMillisService.stop()
 
-            updateState { it.copy(isRecording = false) }
+            updateState {
+                it.copy(isRecording = false, recordingCount = it.recordingCount + 1)
+            }
+
             effect.postValue(RecordingViewEffect.RecordingStopped)
         }
     }
 
-    private fun startAutoRestartLoop(
-        context: Context,
-    ) {
+    private fun startAutoRestartLoop(surface: Surface, settings: RecordingSettings) {
+        autoRestartJob?.cancel()
+        autoRestartJob = viewModelScope.launch {
+
+        }
         cameraSurface?.let { surface ->
             autoRestartJob?.cancel()
             autoRestartJob = viewModelScope.launch {
-                while (currentCoroutineContext().isActive) {
-                    delay(30 * 60 * 1000L)
+                while (isActive) {
+                    delay(30 * 60 * 1000L) // 30 minutes
 
-                    val currentCount = _state.value.recordingCount
+                    val count = _state.value.recordingCount
 
                     cameraService.stopRecordingAndWait()
-                    sensorService.stopSensors(currentCount)
+                    sensorService.stopSensors(count)
 
                     saveService.addTask(
                         SaveTask(
-                            videoName = "recorded_data_${currentCount}.mp4",
-                            outputName = "output_with_subtitle_${currentCount}.mp4",
-                            recordingCount = currentCount
+                            videoName = "recorded_data_${count}.mp4",
+                            outputName = "output_with_subtitle_${count}.mp4",
+                            recordingCount = count
                         )
                     )
 
                     updateState { it.copy(recordingCount = it.recordingCount + 1) }
 
-                    val recordingSettings = getRecordingSettingsUseCase()
+                    val newSettings = getRecordingSettingsUseCase()
+
                     cameraService.startRecordingAndSensors(
-                        context = context,
                         surface = surface,
                         recordingCount = _state.value.recordingCount,
-                        recordingSettings = recordingSettings,
-                        finalizeVideo = { }
+                        recordingSettings = newSettings,
+                        finalizeVideo = {}
                     )
                 }
             }
