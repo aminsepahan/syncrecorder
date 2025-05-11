@@ -9,7 +9,6 @@ import android.hardware.camera2.CaptureRequest
 import android.media.MediaRecorder
 import android.os.Handler
 import android.os.Looper
-import android.os.SystemClock
 import android.view.Surface
 import com.syn2core.syn2corecamera.TAG
 import com.syn2core.syn2corecamera.business.usecase.convert.ConvertFrameTimestampToSrtUseCase
@@ -37,8 +36,7 @@ class Camera2Recorder @Inject constructor(
     private var finalizeCallback: (() -> Unit)? = null
     private var previewSurface: Surface? = null
 
-    private var cameraStartTimestamp: Long = 0L
-    private val frameTimestamps = mutableListOf<Long>()
+    private val frameTimestamps = mutableListOf<Pair<Long, Long>>()
 
     private val cameraId: String by lazy {
         cameraManager.cameraIdList.first { id ->
@@ -48,6 +46,7 @@ class Camera2Recorder @Inject constructor(
         }
     }
 
+    @SuppressLint("MissingPermission")
     fun startPreview(surface: Surface) {
         previewSurface = surface
 
@@ -100,7 +99,7 @@ class Camera2Recorder @Inject constructor(
         surface: Surface,
         outputFile: File,
         settings: RecordingSettings,
-        onStartTimestamp: (Long) -> Unit,
+        onStartTimestamp: () -> Unit,
         onFinalize: () -> Unit
     ) {
         frameTimestamps.clear()
@@ -143,16 +142,10 @@ class Camera2Recorder @Inject constructor(
                     timestamp: Long,
                     frameNumber: Long
                 ) {
-                    frameTimestamps.add(timestamp)
+                    frameTimestamps.add(Pair(frameNumber, timestamp))
 
                     if (!didSendStart) {
-                        val elapsedNow = SystemClock.elapsedRealtimeNanos()
-                        val nanoNow = System.nanoTime()
-                        val bootOffset = elapsedNow - nanoNow
-                        val frameTimestampElapsed = timestamp + bootOffset
-
-                        cameraStartTimestamp = frameTimestampElapsed
-                        onStartTimestamp(frameTimestampElapsed) // based on elapsedRealtimeNanos
+                        onStartTimestamp() // based on elapsedRealtimeNanos
                         didSendStart = true
                     }
 
@@ -204,6 +197,7 @@ class Camera2Recorder @Inject constructor(
         }
     }
 
+    @SuppressLint("MissingPermission")
     private suspend fun openCameraSuspending(): CameraDevice =
         suspendCancellableCoroutine { continuation ->
             cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
@@ -239,11 +233,8 @@ class Camera2Recorder @Inject constructor(
         val frameLogFile = File(getSyn2CoreCameraDirectoryUseCase(), "frame_timestamps.txt")
         frameLogFile.bufferedWriter().use { writer ->
             writer.write("index,timestamp_ms\n")
-            val bootOffset = SystemClock.elapsedRealtimeNanos() - System.nanoTime()
-            frameTimestamps.forEachIndexed { index, timestamp ->
-                val alignedTimestamp = timestamp + bootOffset
-                val timeMs = alignedTimestamp - cameraStartTimestamp
-                writer.write("${index + 1},${timeMs / 1_000_000}\n")
+            frameTimestamps.forEach {
+                writer.write("${it.first + 1},${it.second}\n")
             }
         }
     }

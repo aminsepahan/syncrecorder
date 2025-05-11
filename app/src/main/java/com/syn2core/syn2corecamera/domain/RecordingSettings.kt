@@ -10,8 +10,8 @@ data class RecordingSettings(
     val frameRate: Int = 30,
     val codec: String = "H.264",
     val autoFocus: Boolean = true,
-    val stabilization: Boolean = true,
-    val audioSource: String = "MIC",
+    val stabilization: Boolean = false,
+    val audioSource: String = "CAMCORDER",
     val imuFrequency: Int = 100
 ) {
     fun getResolutionSize(): Pair<Int, Int> = when (resolution) {
@@ -33,7 +33,7 @@ data class RecordingSettings(
         "MIC" -> MediaRecorder.AudioSource.MIC
         "CAMCORDER" -> MediaRecorder.AudioSource.CAMCORDER
         "VOICE_RECOGNITION" -> MediaRecorder.AudioSource.VOICE_RECOGNITION
-        else -> MediaRecorder.AudioSource.MIC
+        else -> MediaRecorder.AudioSource.CAMCORDER
     }
 
     fun getCodec() = when (codec) {
