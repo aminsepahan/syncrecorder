@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,10 +30,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component3
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -50,9 +60,13 @@ fun RecordingScreen(
 ) {
     val viewState by viewModel.state.collectAsState()
     val viewEffect by viewModel.effect.asFlow().collectAsState(RecordingViewEffect.DoNothing)
+    val (focusRequesterRecord, focusRequesterSettings, focusRequesterChart) = remember { FocusRequester.createRefs() }
 
+    LaunchedEffect(Unit) {
+        focusRequesterRecord.requestFocus()
+    }
     LaunchedEffect(viewEffect) {
-        when (val effect = viewEffect) {
+        when (viewEffect) {
             RecordingViewEffect.DoNothing -> {}
             RecordingViewEffect.RecordingStarted -> {
                 Helper.showMessage("Recording started.")
@@ -79,6 +93,9 @@ fun RecordingScreen(
         viewState = viewState,
         viewModel = viewModel,
         onEventHandler = viewModel::processEvent,
+        focusRequesterRecord = focusRequesterRecord,
+        focusRequesterChart = focusRequesterChart,
+        focusRequesterSettings = focusRequesterSettings
     )
 }
 
@@ -87,9 +104,12 @@ fun RecordingLayout(
     viewState: RecordingViewState,
     viewModel: RecordingViewModel,
     onEventHandler: (RecordingViewEvent) -> Unit,
+    focusRequesterRecord: FocusRequester,
+    focusRequesterChart: FocusRequester,
+    focusRequesterSettings: FocusRequester,
 ) {
     val context = LocalContext.current
-
+    val focusedItem = remember { mutableStateOf(Item.Record) }
     Box(modifier = Modifier.fillMaxSize()) {
         val resolution = viewState.settingsState.getResolutionSize()
 
@@ -105,7 +125,7 @@ fun RecordingLayout(
 
         Text(
             text = viewState.formattedDuration,
-            color = Color.White,
+            color = White,
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -122,11 +142,24 @@ fun RecordingLayout(
                 modifier = Modifier
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
+                    .focusRequester(focusRequesterSettings)
+                    .focusProperties {
+                        next = focusRequesterRecord
+                        previous = focusRequesterChart
+                    }
+                    .onFocusChanged({
+                        focusedItem.value = Item.Setting
+                    })
+                    .border(
+                        width = if (focusedItem.value == Item.Setting) 8.dp else 0.dp,
+                        color = White,
+                        shape = CircleShape,
+                    )
             ) {
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = "Settings",
-                    tint = Color.White,
+                    tint = White,
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -142,11 +175,24 @@ fun RecordingLayout(
                 modifier = Modifier
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
+                    .focusRequester(focusRequesterChart)
+                    .focusProperties {
+                        next = focusRequesterSettings
+                        previous = focusRequesterRecord
+                    }
+                    .onFocusChanged({
+                        focusedItem.value = Item.Charts
+                    })
+                    .border(
+                        width = if (focusedItem.value == Item.Charts) 8.dp else 0.dp,
+                        color = White,
+                        shape = CircleShape,
+                    )
             ) {
                 Icon(
                     imageVector = Icons.Default.AreaChart,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = White,
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -169,11 +215,24 @@ fun RecordingLayout(
                     .background(
                         if (viewState.isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                     )
+                    .focusRequester(focusRequesterRecord)
+                    .focusProperties {
+                        next = focusRequesterChart
+                        previous = focusRequesterChart
+                    }
+                    .onFocusChanged({
+                        focusedItem.value = Item.Record
+                    })
+                    .border(
+                        width = if (focusedItem.value == Item.Record) 8.dp else 0.dp,
+                        color = White,
+                        shape = CircleShape,
+                    )
             ) {
                 Icon(
                     imageVector = if (viewState.isRecording) Icons.Default.Stop else Icons.Default.FiberManualRecord,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = White,
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -198,4 +257,11 @@ fun RecordingLayout(
             }
         }
     }
+
+}
+
+enum class Item {
+    Record,
+    Setting,
+    Charts,
 }

@@ -8,10 +8,8 @@ class SensorService @Inject constructor(
     private val aggregator: SensorDataAggregator,
 ) {
     fun startSensors(
-        startTimeStamp: Long,
         imuFrequency: Int
     ) {
-        aggregator.setRecordingStartTime(startTimeStamp)
         unifiedSensorService.startSensors(imuFrequency)
     }
 

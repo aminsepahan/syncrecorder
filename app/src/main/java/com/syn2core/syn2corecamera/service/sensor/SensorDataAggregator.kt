@@ -1,7 +1,6 @@
 package com.syn2core.syn2corecamera.service.sensor
 
 import android.hardware.SensorEvent
-import android.os.SystemClock
 import com.google.gson.Gson
 import com.syn2core.syn2corecamera.business.usecase.convert.ConvertJsonToSrtUseCase
 import com.syn2core.syn2corecamera.business.usecase.directory.GetSyn2CoreCameraDirectoryUseCase
@@ -19,21 +18,13 @@ class SensorDataAggregator @Inject constructor(
     private val convertJsonToSrtUseCase: ConvertJsonToSrtUseCase
 ) {
     private val sensorData = Collections.synchronizedList(mutableListOf<SensorSnapshot>())
-    private var timeStamp: Long = 0L
-
-    fun setRecordingStartTime(timeStamp: Long) {
-        this.timeStamp = timeStamp
-    }
 
     fun recordEvent(type: Int, name: String, event: SensorEvent) {
-        val bootOffset = SystemClock.elapsedRealtimeNanos() - System.nanoTime()
-        val eventElapsed = event.timestamp + bootOffset
-        val relativeTimeMillis = (eventElapsed - timeStamp) / 1_000_000
 
         val snapshot = SensorSnapshot(
             type = type,
             name = name,
-            timestampMillis = relativeTimeMillis,
+            timestampMillis = event.timestamp,
             values = event.values.toList()
         )
         sensorData.add(snapshot)

@@ -39,10 +39,9 @@ class CameraService @Inject constructor(
             surface = surface,
             outputFile = videoFile,
             settings = recordingSettings,
-            onStartTimestamp = { timestamp ->
-                Timber.d("⏱️ Sensor recording started at $timestamp")
+            onStartTimestamp = {
+                Timber.d("⏱️ Sensor recording started")
                 sensorService.startSensors(
-                    startTimeStamp = timestamp,
                     imuFrequency = recordingSettings.getImuSensorDelay()
                 )
             },
