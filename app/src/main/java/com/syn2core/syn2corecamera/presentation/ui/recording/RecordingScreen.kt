@@ -1,6 +1,11 @@
 package com.syn2core.syn2corecamera.presentation.ui.recording
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -35,6 +40,7 @@ import androidx.lifecycle.asFlow
 import com.syn2core.syn2corecamera.extension.Helper
 import com.syn2core.syn2corecamera.navigation.Router
 import com.syn2core.syn2corecamera.presentation.components.CameraView
+import com.syn2core.syn2corecamera.presentation.components.SavingOverlay
 import com.syn2core.syn2corecamera.presentation.components.settings_recording.SettingsBottomSheet
 
 @Composable
@@ -53,7 +59,7 @@ fun RecordingScreen(
             }
 
             RecordingViewEffect.RecordingStopped -> {
-                Helper.showMessage("Recording stoped.")
+                Helper.showMessage("Recording saved.")
             }
 
             RecordingViewEffect.NavigateToShowByChart -> {
@@ -178,6 +184,18 @@ fun RecordingLayout(
                 initialSettings = viewState.settingsState,
                 onDismiss = { onEventHandler(RecordingViewEvent.HideSettings) },
                 onSave = { onEventHandler(RecordingViewEvent.SaveSettings(it)) })
+        }
+
+        AnimatedVisibility(
+            visible = viewState.isSaving,
+            enter = fadeIn(animationSpec = tween(600)) + scaleIn(initialScale = 0.8f),
+            exit = fadeOut(animationSpec = tween(600)) + scaleOut(targetScale = 0.8f)
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                SavingOverlay(
+                    modifier = Modifier.align(Alignment.Center),
+                )
+            }
         }
     }
 }

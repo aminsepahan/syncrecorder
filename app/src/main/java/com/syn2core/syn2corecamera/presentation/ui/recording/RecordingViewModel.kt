@@ -125,6 +125,12 @@ class RecordingViewModel @Inject constructor(
 
     private fun stopAll() {
         viewModelScope.launch {
+            autoRestartJob?.cancel()
+            autoRestartJob = null
+            durationMillisService.stop()
+
+            updateState { it.copy(isSaving = true) }
+
             val currentCount = _state.value.recordingCount
 
             cameraService.stopRecordingAndWait()
@@ -135,12 +141,9 @@ class RecordingViewModel @Inject constructor(
                     videoName = "recorded_data_${currentCount}.mp4",
                     outputName = "output_with_subtitle_${currentCount}.mp4",
                     recordingCount = currentCount
-                )
+                ),
+                onDone = { updateState { it.copy(isSaving = false) } }
             )
-
-            autoRestartJob?.cancel()
-            autoRestartJob = null
-            durationMillisService.stop()
 
             updateState {
                 it.copy(isRecording = false, recordingCount = it.recordingCount + 1)
@@ -152,11 +155,8 @@ class RecordingViewModel @Inject constructor(
 
     private fun startAutoRestartLoop(surface: Surface, settings: RecordingSettings) {
         autoRestartJob?.cancel()
-        autoRestartJob = viewModelScope.launch {
 
-        }
-        cameraSurface?.let { surface ->
-            autoRestartJob?.cancel()
+        cameraSurface?.let {
             autoRestartJob = viewModelScope.launch {
                 while (isActive) {
                     delay(30 * 60 * 1000L) // 30 minutes
@@ -171,7 +171,7 @@ class RecordingViewModel @Inject constructor(
                             videoName = "recorded_data_${count}.mp4",
                             outputName = "output_with_subtitle_${count}.mp4",
                             recordingCount = count
-                        )
+                        ),
                     )
 
                     updateState { it.copy(recordingCount = it.recordingCount + 1) }

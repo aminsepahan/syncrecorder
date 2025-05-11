@@ -17,7 +17,7 @@ class SaveService @Inject constructor(
     private val getSyn2CoreCameraDirectoryUseCase: GetSyn2CoreCameraDirectoryUseCase,
     //private val videoCompressionUseCase: VideoCompressionUseCase,
 ) {
-    private val queue = Channel<SaveTask>(Channel.UNLIMITED)
+    private val queue = Channel<Pair<SaveTask, () -> Unit>>(Channel.UNLIMITED)
     private var serviceStarted = false
 
     fun startService(scope: CoroutineScope) {
@@ -25,34 +25,37 @@ class SaveService @Inject constructor(
         serviceStarted = true
 
         scope.launch(Dispatchers.IO) {
-            for (task in queue) {
+            for ((task, onDone) in queue) {
                 try {
                     val subtitleFile = "sensor_data_${task.recordingCount}.srt"
                     embedSubtitleIntoVideoUseCase(
                         task.videoName,
                         subtitleFile,
-                        task.outputName
+                        task.outputName,
                     )
 
                     /*val compressedVideoName = "compressed_${task.outputName}"
-                    val compressJob = async {
-                        videoCompressionUseCase(task.outputName, compressedVideoName)
-                    }
-                    compressJob.await()
+                   val compressJob = async {
+                       videoCompressionUseCase(task.outputName, compressedVideoName)
+                   }
+                   compressJob.await()
 
-                    deleteOldVideoFiles(task.videoName, task.outputName)*/
+                   deleteOldVideoFiles(task.videoName, task.outputName)*/
 
-                    Timber.tag(TAG).d("✅ Embedded and saved: ${task.outputName}")
+                    onDone()
                 } catch (e: Exception) {
-                    Timber.tag(TAG).e(e, "❌ Failed saving: ${task.outputName}")
+                    Timber.tag(TAG).e(e)
+                    onDone()
                 }
             }
         }
     }
 
-    suspend fun addTask(task: SaveTask) {
-        Timber.tag(TAG).d("📥 Task added to queue: $task")
-        queue.send(task)
+    suspend fun addTask(
+        task: SaveTask,
+        onDone: () -> Unit = {}
+    ) {
+        queue.send(Pair(task, onDone))
     }
 
     // Delete old files

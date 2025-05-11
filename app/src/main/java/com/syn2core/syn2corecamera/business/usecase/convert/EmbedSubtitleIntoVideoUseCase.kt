@@ -11,10 +11,11 @@ import javax.inject.Inject
 class EmbedSubtitleIntoVideoUseCase @Inject constructor(
     private val getSyn2CoreCameraDirectoryUseCase: GetSyn2CoreCameraDirectoryUseCase,
 ) {
+
     operator fun invoke(
         videoNameFile: String,
         subtitleNameFile: String,
-        outputNameFile: String
+        outputNameFile: String,
     ) {
         val videoFile = File(getSyn2CoreCameraDirectoryUseCase(), videoNameFile)
         val subtitleFile = File(getSyn2CoreCameraDirectoryUseCase(), subtitleNameFile)
@@ -34,13 +35,24 @@ class EmbedSubtitleIntoVideoUseCase @Inject constructor(
             outputFile.absolutePath
         )
 
-        FFmpegKit.executeAsync(cmd.joinToString(" ")) { session ->
-            val returnCode = session.returnCode
-            if (ReturnCode.isSuccess(returnCode)) {
-                Timber.tag(TAG).d("✅ Subtitle embedded successfully into video.")
-            } else {
-                Timber.tag(TAG).e("❌ FFmpeg failed: ${session.failStackTrace}")
+        FFmpegKit.executeAsync(
+            cmd.joinToString(" "),
+            { session ->
+                val returnCode = session.returnCode
+                if (ReturnCode.isSuccess(returnCode)) {
+                    Timber.tag(TAG).d("✅ Subtitle embedded successfully into video.")
+                } else {
+                    Timber.tag(TAG).e("❌ FFmpeg failed: ${session.failStackTrace}")
+                }
+            },
+            { log ->
+                log?.let {
+                    Timber.tag(TAG).d("[FFmpegLog] ${it.message}")
+                }
+            },
+            { stats ->
+                // nothing
             }
-        }
+        )
     }
 }
