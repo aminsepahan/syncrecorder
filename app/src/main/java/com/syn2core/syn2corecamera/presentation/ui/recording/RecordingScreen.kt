@@ -51,7 +51,6 @@ import com.syn2core.syn2corecamera.extension.Helper
 import com.syn2core.syn2corecamera.navigation.Router
 import com.syn2core.syn2corecamera.presentation.components.CameraView
 import com.syn2core.syn2corecamera.presentation.components.SavingOverlay
-import com.syn2core.syn2corecamera.presentation.components.settings_recording.SettingsBottomSheet
 
 @Composable
 fun RecordingScreen(
@@ -79,14 +78,14 @@ fun RecordingScreen(
             RecordingViewEffect.NavigateToShowByChart -> {
                 router?.goShowByChart()
             }
+
+            RecordingViewEffect.NavigateToSetting -> {
+                router?.goSetting()
+            }
         }
 
         // Reset effect after handling to prevent re-trigger
         viewModel.clearEffect()
-    }
-
-    LaunchedEffect(Unit) {
-        viewModel.processEvent(RecordingViewEvent.LoadSettings)
     }
 
     RecordingLayout(
@@ -138,7 +137,7 @@ fun RecordingLayout(
                 .padding(start = 26.dp, bottom = 26.dp)
         ) {
             IconButton(
-                onClick = { onEventHandler(RecordingViewEvent.ShowSettings) },
+                onClick = { onEventHandler(RecordingViewEvent.NavigateToSettings) },
                 modifier = Modifier
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
@@ -147,9 +146,9 @@ fun RecordingLayout(
                         next = focusRequesterRecord
                         previous = focusRequesterChart
                     }
-                    .onFocusChanged({
+                    .onFocusChanged {
                         focusedItem.value = Item.Setting
-                    })
+                    }
                     .border(
                         width = if (focusedItem.value == Item.Setting) 8.dp else 0.dp,
                         color = White,
@@ -180,9 +179,9 @@ fun RecordingLayout(
                         next = focusRequesterSettings
                         previous = focusRequesterRecord
                     }
-                    .onFocusChanged({
+                    .onFocusChanged {
                         focusedItem.value = Item.Charts
-                    })
+                    }
                     .border(
                         width = if (focusedItem.value == Item.Charts) 8.dp else 0.dp,
                         color = White,
@@ -220,9 +219,9 @@ fun RecordingLayout(
                         next = focusRequesterChart
                         previous = focusRequesterChart
                     }
-                    .onFocusChanged({
+                    .onFocusChanged {
                         focusedItem.value = Item.Record
-                    })
+                    }
                     .border(
                         width = if (focusedItem.value == Item.Record) 8.dp else 0.dp,
                         color = White,
@@ -236,13 +235,6 @@ fun RecordingLayout(
                     modifier = Modifier.size(22.dp)
                 )
             }
-        }
-
-        AnimatedVisibility(viewState.settingsDialogVisible && !viewState.isRecording) {
-            SettingsBottomSheet(
-                initialSettings = viewState.settingsState,
-                onDismiss = { onEventHandler(RecordingViewEvent.HideSettings) },
-                onSave = { onEventHandler(RecordingViewEvent.SaveSettings(it)) })
         }
 
         AnimatedVisibility(

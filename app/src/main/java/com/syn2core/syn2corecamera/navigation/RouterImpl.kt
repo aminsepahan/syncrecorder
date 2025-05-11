@@ -18,6 +18,10 @@ class RouterImpl(
         navigate(Screen.ShowByChart)
     }
 
+    override fun goSetting() {
+        navigate(Screen.Setting)
+    }
+
     override fun goBack(startDestination: String) {
         navHostController.apply {
             navigateUp()

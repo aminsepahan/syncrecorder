@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.syn2core.syn2corecamera.presentation.ui.permission.PermissionScreen
 import com.syn2core.syn2corecamera.presentation.ui.recording.RecordingScreen
+import com.syn2core.syn2corecamera.presentation.ui.setting.SettingScreen
 import com.syn2core.syn2corecamera.presentation.ui.show_by_chart.ShowByChartScreen
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -44,6 +45,9 @@ fun NavigationContainer(
         }
         composable(Screen.ShowByChart.route) {
             ShowByChartScreen(router)
+        }
+        composable(Screen.Setting.route) {
+            SettingScreen(router)
         }
     }
 }

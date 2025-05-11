@@ -1,4 +1,4 @@
-package com.syn2core.syn2corecamera.presentation.components.settings_recording
+package com.syn2core.syn2corecamera.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

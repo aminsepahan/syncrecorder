@@ -11,4 +11,5 @@ sealed class RecordingViewEffect : BaseViewEffect {
     object RecordingStarted : RecordingViewEffect()
     object RecordingStopped : RecordingViewEffect()
     data object NavigateToShowByChart : RecordingViewEffect()
+    data object NavigateToSetting : RecordingViewEffect()
 }

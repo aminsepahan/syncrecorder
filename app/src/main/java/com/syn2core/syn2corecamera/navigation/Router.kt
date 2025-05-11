@@ -4,5 +4,6 @@ interface Router {
     fun goRecording()
     fun goPermission()
     fun goShowByChart()
+    fun goSetting()
     fun goBack(startDestination: String)
 }

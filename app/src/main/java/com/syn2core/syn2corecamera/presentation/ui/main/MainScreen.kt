@@ -31,6 +31,10 @@ fun MainScreen(finish: () -> Unit) {
                 finish()
             }
         }
+
+        Screen.ShowByChart.route, Screen.Setting.route -> {
+            router.goBack(Screen.Recording.route)
+        }
     }
     Scaffold { innerPadding ->
         NavigationContainer(

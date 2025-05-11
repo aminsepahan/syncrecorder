@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.syn2core.common.ui.base.BaseViewModel
 import com.syn2core.common.ui.livedata.SingleLiveData
 import com.syn2core.syn2corecamera.business.usecase.setting.GetRecordingSettingsUseCase
-import com.syn2core.syn2corecamera.business.usecase.setting.SetRecordingSettingsUseCase
 import com.syn2core.syn2corecamera.domain.RecordingSettings
 import com.syn2core.syn2corecamera.domain.SaveTask
 import com.syn2core.syn2corecamera.service.camera.CameraService
@@ -32,7 +31,6 @@ import javax.inject.Inject
 @HiltViewModel
 class RecordingViewModel @Inject constructor(
     private val getRecordingSettingsUseCase: GetRecordingSettingsUseCase,
-    private val setRecordingSettingsUseCase: SetRecordingSettingsUseCase,
     private val durationMillisService: DurationMillisService,
     private val sensorService: SensorService,
     private val cameraService: CameraService,
@@ -61,30 +59,9 @@ class RecordingViewModel @Inject constructor(
                 else startAll()
             }
 
-            RecordingViewEvent.ShowSettings -> {
-                updateState { it.copy(settingsDialogVisible = true) }
-            }
-
-            RecordingViewEvent.HideSettings -> {
-                updateState { it.copy(settingsDialogVisible = false) }
-            }
-
-            is RecordingViewEvent.SaveSettings -> {
-                viewModelScope.launch {
-                    setRecordingSettingsUseCase(event.settings)
-                    updateState {
-                        it.copy(
-                            settingsState = event.settings,
-                            settingsDialogVisible = false
-                        )
-                    }
-                }
-            }
-
-            RecordingViewEvent.LoadSettings -> {
-                viewModelScope.launch {
-                    val settingsState = getRecordingSettingsUseCase()
-                    updateState { it.copy(settingsState = settingsState) }
+            RecordingViewEvent.NavigateToSettings -> {
+                if (_state.value.isRecording) {
+                    effect.postValue(RecordingViewEffect.NavigateToSetting)
                 }
             }
 
