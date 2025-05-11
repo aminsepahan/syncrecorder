@@ -68,6 +68,13 @@ class RecordingViewModel @Inject constructor(
             RecordingViewEvent.NavigateToShowByChart -> {
                 effect.postValue(RecordingViewEffect.NavigateToShowByChart)
             }
+
+            RecordingViewEvent.LoadSettings -> {
+                viewModelScope.launch {
+                    val settingsState = getRecordingSettingsUseCase()
+                    updateState { it.copy(settingsState = settingsState) }
+                }
+            }
         }
     }
 

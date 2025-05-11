@@ -16,4 +16,5 @@ sealed class RecordingViewEvent : BaseViewEvent {
     ) : RecordingViewEvent()
     object NavigateToSettings : RecordingViewEvent()
     object NavigateToShowByChart : RecordingViewEvent()
+    object LoadSettings : RecordingViewEvent()
 }
