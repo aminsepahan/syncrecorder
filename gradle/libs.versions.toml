@@ -1,5 +1,5 @@
 [versions]
-agp = "8.11.0-alpha09"
+agp = "8.11.0-alpha10"
 camera-core = "1.4.2"
 ffmpegKitFullGpl = "6.0-2"
 gson = "2.13.1"

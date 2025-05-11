@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
+import com.syn2core.syn2corecamera.TAG
+import timber.log.Timber
 
 @Suppress("DEPRECATION")
 @Composable
@@ -21,12 +23,22 @@ fun CameraView(
             val textureView = TextureView(context)
 
             textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-                override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
+                override fun onSurfaceTextureAvailable(
+                    surface: SurfaceTexture,
+                    width: Int,
+                    height: Int
+                ) {
                     configureTransform(textureView, width, height, resolution)
                     onSurfaceReady(Surface(surface))
                 }
 
-                override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
+                override fun onSurfaceTextureSizeChanged(
+                    surface: SurfaceTexture,
+                    width: Int,
+                    height: Int
+                ) {
+                }
+
                 override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean = true
                 override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
             }
@@ -42,8 +54,15 @@ fun CameraView(
     )
 }
 
-private fun configureTransform(view: TextureView, viewWidth: Int, viewHeight: Int, resolution: Pair<Int, Int>) {
+private fun configureTransform(
+    view: TextureView,
+    viewWidth: Int,
+    viewHeight: Int,
+    resolution: Pair<Int, Int>
+) {
     val matrix = Matrix()
+
+    Timber.tag(TAG).i("resulution camera view : $resolution")
 
     val (previewWidth, previewHeight) = resolution
 

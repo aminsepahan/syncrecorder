@@ -11,6 +11,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.Surface
+import com.syn2core.syn2corecamera.TAG
 import com.syn2core.syn2corecamera.business.usecase.convert.ConvertFrameTimestampToSrtUseCase
 import com.syn2core.syn2corecamera.business.usecase.directory.GetSyn2CoreCameraDirectoryUseCase
 import com.syn2core.syn2corecamera.domain.RecordingSettings
@@ -111,17 +112,28 @@ class Camera2Recorder @Inject constructor(
         val surfaces = listOf(surface, recorderSurface)
 
         cameraDevice = openCameraSuspending()
-
         captureSession = createSessionSuspending(surfaces)
 
         val captureRequest =
             cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
                 addTarget(surface)
                 addTarget(recorderSurface)
+                if (settings.autoFocus) {
+                    set(
+                        CaptureRequest.CONTROL_AF_MODE,
+                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+                    )
+                }
+                if (settings.stabilization) {
+                    set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+                    )
+                }
             }
 
         var didSendStart = false
-
+        var recorderStarted = false
         captureSession?.setRepeatingRequest(
             captureRequest.build(),
             object : CameraCaptureSession.CaptureCallback() {
@@ -131,6 +143,8 @@ class Camera2Recorder @Inject constructor(
                     timestamp: Long,
                     frameNumber: Long
                 ) {
+                    frameTimestamps.add(timestamp)
+
                     if (!didSendStart) {
                         val elapsedNow = SystemClock.elapsedRealtimeNanos()
                         val nanoNow = System.nanoTime()
@@ -142,13 +156,15 @@ class Camera2Recorder @Inject constructor(
                         didSendStart = true
                     }
 
-                    frameTimestamps.add(timestamp)
+                    if (!recorderStarted) {
+                        mediaRecorder?.start()
+                        recorderStarted = true
+                        Timber.tag(TAG).d("🎬 MediaRecorder started at frame $frameNumber")
+                    }
                 }
             },
             Handler(Looper.getMainLooper())
         )
-
-        mediaRecorder?.start()
     }
 
     fun stopRecording() {
