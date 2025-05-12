@@ -1,54 +1,37 @@
 package com.syn2core.syn2corecamera.presentation.ui.show_by_chart
 
 import android.graphics.Color
-import android.view.View
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AreaChart
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.asFlow
-import androidx.media3.common.MediaItem
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.PlayerView
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.syn2core.syn2corecamera.navigation.Router
 import com.syn2core.syn2corecamera.navigation.Screen
-import kotlinx.coroutines.launch
 
 @Composable
 fun ShowByChartScreen(
@@ -84,136 +67,58 @@ fun ShowByChartLayout(
     viewState: ShowByChartViewState,
     onEventHandler: (ShowByChartViewEvent) -> Unit,
 ) {
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
-    var isBottomSheetVisible by remember { mutableStateOf(false) }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        viewState.videoUri?.let { uri ->
-            AndroidView(
-                factory = { context ->
-                    val player = ExoPlayer.Builder(context).build().apply {
-                        setMediaItem(MediaItem.fromUri(uri))
-                        prepare()
-                        playWhenReady = false
-                    }
-                    PlayerView(context).apply {
-                        this.player = player
-                        useController = true
-                        setControllerVisibilityListener(
-                            PlayerView.ControllerVisibilityListener { visibility ->
-                                onEventHandler(
-                                    ShowByChartViewEvent.PlayerControlsVisibilityChanged(
-                                        visibility == View.VISIBLE
-                                    )
-                                )
-                            }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Charts Sensors") },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        onEventHandler(ShowByChartViewEvent.GoBackToRecordingPage)
+                    }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
                         )
                     }
-                },
-                modifier = Modifier.fillMaxSize()
+                }
             )
         }
-
-        AnimatedVisibility(
-            visible = viewState.showControls,
-            enter = slideInVertically { -it },
-            exit = slideOutVertically { -it },
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(top = 12.dp, start = 12.dp)
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp)
         ) {
-            IconButton(
-                onClick = {
-                    onEventHandler(ShowByChartViewEvent.GoBackToRecordingPage)
-                }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = androidx.compose.ui.graphics.Color.White,
-                    modifier = Modifier.size(26.dp)
-                )
-            }
-        }
-
-        AnimatedVisibility(
-            visible = viewState.showControls,
-            enter = slideInVertically { it },
-            exit = slideOutVertically { it },
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(bottom = 6.dp, start = 112.dp)
-        ) {
-            IconButton(
-                onClick = {
-                    isBottomSheetVisible = true
-                    scope.launch { bottomSheetState.show() }
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AreaChart,
-                    contentDescription = null,
-                    tint = androidx.compose.ui.graphics.Color.White,
-                    modifier = Modifier.size(26.dp)
-                )
-            }
-        }
-
-        if (isBottomSheetVisible) {
-            ModalBottomSheet(
-                onDismissRequest = {
-                    scope.launch { bottomSheetState.hide() }.invokeOnCompletion {
-                        isBottomSheetVisible = false
-                    }
-                },
-                sheetState = bottomSheetState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 52.dp),
-                containerColor = androidx.compose.ui.graphics.Color.LightGray,
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text("Accelerometer", color = androidx.compose.ui.graphics.Color.Black)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Accelerometer")
                     Chart(
                         xData = viewState.chartDataX,
                         yData = viewState.chartDataY,
                         zData = viewState.chartDataZ
                     )
+                }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text("Gyroscope", color = androidx.compose.ui.graphics.Color.Black)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Gyroscope")
                     Chart(
                         xData = viewState.gyroDataX,
                         yData = viewState.gyroDataY,
                         zData = viewState.gyroDataZ
                     )
+                }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text("Magnetometer", color = androidx.compose.ui.graphics.Color.Black)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Magnetometer")
                     Chart(
                         xData = viewState.magnetDataX,
                         yData = viewState.magnetDataY,
                         zData = viewState.magnetDataZ
                     )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Button(onClick = {
-                        scope.launch { bottomSheetState.hide() }.invokeOnCompletion {
-                            isBottomSheetVisible = false
-                        }
-                    }) {
-                        Text("Close")
-                    }
                 }
             }
         }

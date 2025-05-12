@@ -1,6 +1,5 @@
 package com.syn2core.syn2corecamera.presentation.ui.show_by_chart
 
-import android.net.Uri
 import com.github.mikephil.charting.data.Entry
 import com.syn2core.common.ui.base.BaseViewState
 
@@ -10,7 +9,6 @@ import com.syn2core.common.ui.base.BaseViewState
  */
 
 data class ShowByChartViewState(
-    val videoUri: Uri? = null,
     val chartDataX: List<Entry> = emptyList(),
     val chartDataY: List<Entry> = emptyList(),
     val chartDataZ: List<Entry> = emptyList(),
@@ -20,5 +18,4 @@ data class ShowByChartViewState(
     val magnetDataX: List<Entry> = emptyList(),
     val magnetDataY: List<Entry> = emptyList(),
     val magnetDataZ: List<Entry> = emptyList(),
-    var showControls: Boolean = false
 ) : BaseViewState

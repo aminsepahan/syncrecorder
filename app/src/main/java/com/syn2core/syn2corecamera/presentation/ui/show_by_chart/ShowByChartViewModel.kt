@@ -1,6 +1,5 @@
 package com.syn2core.syn2corecamera.presentation.ui.show_by_chart
 
-import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.github.mikephil.charting.data.Entry
 import com.google.gson.Gson
@@ -40,10 +39,6 @@ class ShowByChartViewModel @Inject constructor(
             ShowByChartViewEvent.GoBackToRecordingPage -> {
                 effect.postValue(ShowByChartViewEffect.GoBackRecordingPage)
             }
-
-            is ShowByChartViewEvent.PlayerControlsVisibilityChanged -> {
-                updateState { it.copy(showControls = event.visible) }
-            }
         }
     }
 
@@ -52,7 +47,6 @@ class ShowByChartViewModel @Inject constructor(
             try {
                 val dir = getSyn2CoreCameraDirectoryUseCase()
                 val jsonFile = File(dir, "sensor_data_1.json")
-                val videoFile = File(dir, "s2c_embedded_.mp4")
 
                 if (jsonFile.exists()) {
                     val jsonString = jsonFile.readText()
@@ -107,7 +101,6 @@ class ShowByChartViewModel @Inject constructor(
                             magnetDataX = magnetX,
                             magnetDataY = magnetY,
                             magnetDataZ = magnetZ,
-                            videoUri = videoFile.toUri()
                         )
                     }
                 }
