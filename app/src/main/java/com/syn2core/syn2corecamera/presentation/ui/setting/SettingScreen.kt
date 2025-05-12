@@ -3,11 +3,9 @@ package com.syn2core.syn2corecamera.presentation.ui.setting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -96,9 +94,8 @@ fun SettingLayout(
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxWidth()
-                .padding(start = 40.dp, end = 40.dp, bottom = 16.dp)
-                .verticalScroll(rememberScrollState())
+                .fillMaxSize()
+                .padding(start = 40.dp, end = 40.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -145,9 +142,7 @@ fun SettingLayout(
             }
 
             Button(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(42.dp),
+                modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     onEventHandler(
                         SettingViewEvent.Save(
