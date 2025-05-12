@@ -5,8 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.syn2core.common.ui.base.BaseViewModel
 import com.syn2core.common.ui.livedata.SingleLiveData
 import com.syn2core.syn2corecamera.business.usecase.setting.GetRecordingSettingsUseCase
-import com.syn2core.syn2corecamera.business.usecase.time.GetFormattedDateUseCase
-import com.syn2core.syn2corecamera.business.usecase.time.GetFormattedTimeUseCase
 import com.syn2core.syn2corecamera.domain.RecordingSettings
 import com.syn2core.syn2corecamera.domain.SaveTask
 import com.syn2core.syn2corecamera.service.camera.CameraService
@@ -33,8 +31,6 @@ import javax.inject.Inject
 @HiltViewModel
 class RecordingViewModel @Inject constructor(
     private val getRecordingSettingsUseCase: GetRecordingSettingsUseCase,
-    private val getFormattedDateUseCase: GetFormattedDateUseCase,
-    private val getFormattedTimeUseCase: GetFormattedTimeUseCase,
     private val durationMillisService: DurationMillisService,
     private val sensorService: SensorService,
     private val cameraService: CameraService,
@@ -65,6 +61,13 @@ class RecordingViewModel @Inject constructor(
                 else startAll()
             }
 
+            RecordingViewEvent.LoadSettings -> {
+                viewModelScope.launch {
+                    val settingsState = getRecordingSettingsUseCase()
+                    updateState { it.copy(settingsState = settingsState) }
+                }
+            }
+
             RecordingViewEvent.NavigateToSettings -> {
                 if (!_state.value.isRecording) {
                     effect.postValue(RecordingViewEffect.NavigateToSetting)
@@ -74,13 +77,6 @@ class RecordingViewModel @Inject constructor(
             RecordingViewEvent.NavigateToShowByChart -> {
                 if (!_state.value.isRecording) {
                     effect.postValue(RecordingViewEffect.NavigateToShowByChart)
-                }
-            }
-
-            RecordingViewEvent.LoadSettings -> {
-                viewModelScope.launch {
-                    val settingsState = getRecordingSettingsUseCase()
-                    updateState { it.copy(settingsState = settingsState) }
                 }
             }
         }

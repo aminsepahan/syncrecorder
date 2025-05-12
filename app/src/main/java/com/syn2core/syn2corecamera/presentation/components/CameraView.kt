@@ -1,17 +1,13 @@
 package com.syn2core.syn2corecamera.presentation.components
 
-import android.graphics.Matrix
-import android.graphics.SurfaceTexture
 import android.view.Surface
-import android.view.TextureView
+import android.view.SurfaceHolder
+import android.view.SurfaceView
 import android.view.ViewGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
-import com.syn2core.syn2corecamera.TAG
-import timber.log.Timber
 
-@Suppress("DEPRECATION")
 @Composable
 fun CameraView(
     modifier: Modifier = Modifier,
@@ -20,60 +16,27 @@ fun CameraView(
 ) {
     AndroidView(
         factory = { context ->
-            val textureView = TextureView(context)
+            val surfaceView = SurfaceView(context)
+            val (width, height) = resolution
 
-            textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-                override fun onSurfaceTextureAvailable(
-                    surface: SurfaceTexture,
-                    width: Int,
-                    height: Int
-                ) {
-                    configureTransform(textureView, width, height, resolution)
-                    onSurfaceReady(Surface(surface))
+            surfaceView.layoutParams = ViewGroup.LayoutParams(width, height)
+
+            surfaceView.holder.addCallback(object : SurfaceHolder.Callback {
+                override fun surfaceCreated(holder: SurfaceHolder) {
+                    onSurfaceReady(holder.surface)
                 }
 
-                override fun onSurfaceTextureSizeChanged(
-                    surface: SurfaceTexture,
+                override fun surfaceChanged(
+                    holder: SurfaceHolder,
+                    format: Int,
                     width: Int,
                     height: Int
-                ) {
-                }
+                ) {}
 
-                override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean = true
-                override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
-            }
-
-            textureView.layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-
-            textureView
+                override fun surfaceDestroyed(holder: SurfaceHolder) {}
+            })
+            surfaceView
         },
         modifier = modifier
     )
-}
-
-private fun configureTransform(
-    view: TextureView,
-    viewWidth: Int,
-    viewHeight: Int,
-    resolution: Pair<Int, Int>
-) {
-    val matrix = Matrix()
-
-    Timber.tag(TAG).i("resulution camera view : $resolution")
-
-    val (previewWidth, previewHeight) = resolution
-
-    matrix.postRotate(270f, viewWidth / 2f, viewHeight / 2f)
-
-    val scaleX = viewHeight.toFloat() / previewHeight.toFloat()
-    val scaleY = viewWidth.toFloat() / previewWidth.toFloat()
-
-    val scale = maxOf(scaleX, scaleY)
-
-    matrix.postScale(scale, scale, viewWidth / 2f, viewHeight / 2f)
-
-    view.setTransform(matrix)
 }

@@ -75,8 +75,7 @@ class Camera2Recorder @Inject constructor(
             object : CameraCaptureSession.StateCallback() {
                 override fun onConfigured(session: CameraCaptureSession) {
                     captureSession = session
-                    val previewRequest =
-                        cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
+                    val previewRequest = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
                             addTarget(surface)
                         }
                     session.setRepeatingRequest(
@@ -193,6 +192,7 @@ class Camera2Recorder @Inject constructor(
             setVideoSize(width, height)
             setVideoEncoder(settings.getCodec())
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            setOrientationHint(0)
             prepare()
         }
     }

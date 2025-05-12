@@ -52,7 +52,7 @@ class ShowByChartViewModel @Inject constructor(
             try {
                 val dir = getSyn2CoreCameraDirectoryUseCase()
                 val jsonFile = File(dir, "sensor_data_1.json")
-                val videoFile = File(dir, "output_with_subtitle_1.mp4")
+                val videoFile = File(dir, "s2c_embedded_.mp4")
 
                 if (jsonFile.exists()) {
                     val jsonString = jsonFile.readText()

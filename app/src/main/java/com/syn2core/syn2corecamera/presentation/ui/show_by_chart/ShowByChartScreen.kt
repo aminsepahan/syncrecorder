@@ -212,7 +212,7 @@ fun ShowByChartLayout(
                             isBottomSheetVisible = false
                         }
                     }) {
-                        Text("close")
+                        Text("Close")
                     }
                 }
             }
