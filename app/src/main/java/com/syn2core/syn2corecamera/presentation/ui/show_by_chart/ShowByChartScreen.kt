@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AreaChart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -112,6 +113,28 @@ fun ShowByChartLayout(
                 },
                 modifier = Modifier.fillMaxSize()
             )
+        }
+
+        AnimatedVisibility(
+            visible = viewState.showControls,
+            enter = slideInVertically { -it },
+            exit = slideOutVertically { -it },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(top = 12.dp, start = 12.dp)
+        ) {
+            IconButton(
+                onClick = {
+                    onEventHandler(ShowByChartViewEvent.GoBackToRecordingPage)
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = androidx.compose.ui.graphics.Color.White,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
         }
 
         AnimatedVisibility(
