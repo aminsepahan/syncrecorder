@@ -23,9 +23,12 @@ class RouterImpl(
     }
 
     override fun goBack(startDestination: String) {
-        navHostController.apply {
-            navigateUp()
-            navigate(startDestination)
+        val popped = navHostController.popBackStack()
+        if (!popped) {
+            navHostController.navigate(startDestination) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
         }
     }
 

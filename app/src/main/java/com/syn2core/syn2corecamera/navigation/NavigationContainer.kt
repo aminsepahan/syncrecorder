@@ -24,7 +24,7 @@ fun NavigationContainer(
     navController: NavHostController,
 ) {
     val startDestination = remember { mutableStateOf(Screen.Permission.route) }
-    LaunchedEffect(startDestination) {
+    LaunchedEffect(Unit) {
         if (startDestination.value == Screen.Recording.route) {
             router.goRecording()
         }

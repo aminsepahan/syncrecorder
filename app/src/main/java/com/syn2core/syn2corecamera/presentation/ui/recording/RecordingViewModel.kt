@@ -60,13 +60,15 @@ class RecordingViewModel @Inject constructor(
             }
 
             RecordingViewEvent.NavigateToSettings -> {
-                if (_state.value.isRecording) {
+                if (!_state.value.isRecording) {
                     effect.postValue(RecordingViewEffect.NavigateToSetting)
                 }
             }
 
             RecordingViewEvent.NavigateToShowByChart -> {
-                effect.postValue(RecordingViewEffect.NavigateToShowByChart)
+                if (!_state.value.isRecording) {
+                    effect.postValue(RecordingViewEffect.NavigateToShowByChart)
+                }
             }
 
             RecordingViewEvent.LoadSettings -> {

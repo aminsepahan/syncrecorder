@@ -3,7 +3,6 @@ package com.syn2core.syn2corecamera.presentation.ui.setting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -16,7 +15,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -31,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.asFlow
 import com.syn2core.syn2corecamera.domain.RecordingSettings
@@ -70,7 +69,7 @@ fun SettingScreen(
 @Composable
 fun SettingLayout(
     viewState: SettingViewState,
-    onEventHandler: (SettingViewEvent) -> Unit,
+    onEventHandler: (SettingViewEvent) -> Unit
 ) {
     var resolution by remember { mutableStateOf(viewState.settingsState.resolution) }
     var frameRate by remember { mutableIntStateOf(viewState.settingsState.frameRate) }
@@ -97,67 +96,72 @@ fun SettingLayout(
         Column(
             modifier = Modifier
                 .padding(innerPadding)
+                .fillMaxWidth()
+                .padding(start = 40.dp, end = 40.dp, bottom = 16.dp)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp)
         ) {
-            Text("Video Settings", style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(16.dp))
-
-            DropdownSelector("Resolution", listOf("480p", "720p", "1080p", "4K"), resolution) {
-                resolution = it
-            }
-
-            DropdownSelector("Frame Rate", listOf(24, 30, 60), frameRate) {
-                frameRate = it
-            }
-
-            DropdownSelector("Video Codec", listOf("H.264", "HEVC"), codec) {
-                codec = it
-            }
-
-            DropdownSelector(
-                "Audio Source",
-                listOf("MIC", "CAMCORDER", "VOICE_RECOGNITION"),
-                audioSource
-            ) {
-                audioSource = it
-            }
-
-            DropdownSelector("IMU Frequency", listOf(10, 50, 100), imuFrequency) {
-                imuFrequency = it
-            }
-
-            Spacer(Modifier.height(8.dp))
-
             Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(18.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(checked = autoFocus, onCheckedChange = { autoFocus = it })
-                    Text("Auto Focus")
+                Column(modifier = Modifier.weight(1f)) {
+                    DropdownSelector("Resolution", listOf("480p", "720p", "1080p", "4K"), resolution) {
+                        resolution = it
+                    }
+
+                    DropdownSelector("Frame Rate", listOf(24, 30, 60), frameRate) {
+                        frameRate = it
+                    }
+
+                    DropdownSelector("Video Codec", listOf("H.264", "HEVC"), codec) {
+                        codec = it
+                    }
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(checked = stabilization, onCheckedChange = { stabilization = it })
-                    Text("Stabilization")
+
+                Column(modifier = Modifier.weight(1f)) {
+                    DropdownSelector("Audio Source", listOf("MIC", "CAMCORDER", "VOICE_RECOGNITION"), audioSource) {
+                        audioSource = it
+                    }
+
+                    DropdownSelector("IMU Frequency", listOf(10, 50, 100), imuFrequency) {
+                        imuFrequency = it
+                    }
+
+                    Row(
+                        Modifier.fillMaxWidth().padding(top = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(checked = autoFocus, onCheckedChange = { autoFocus = it })
+                            Text("Auto Focus", fontSize = 16.sp)
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(checked = stabilization, onCheckedChange = { stabilization = it })
+                            Text("Stabilization", fontSize = 16.sp)
+                        }
+                    }
                 }
             }
-
-            Spacer(Modifier.height(24.dp))
 
             Button(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(42.dp),
                 onClick = {
-                    val settings = RecordingSettings(
-                        resolution,
-                        frameRate,
-                        codec,
-                        autoFocus,
-                        stabilization,
-                        audioSource,
-                        imuFrequency
+                    onEventHandler(
+                        SettingViewEvent.Save(
+                            RecordingSettings(
+                                resolution = resolution,
+                                frameRate = frameRate,
+                                codec = codec,
+                                autoFocus = autoFocus,
+                                stabilization = stabilization,
+                                audioSource = audioSource,
+                                imuFrequency = imuFrequency
+                            )
+                        )
                     )
-                    onEventHandler(SettingViewEvent.Save(settings))
                 }
             ) {
                 Text("Save")

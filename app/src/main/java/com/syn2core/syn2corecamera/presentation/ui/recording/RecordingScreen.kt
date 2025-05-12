@@ -64,6 +64,7 @@ fun RecordingScreen(
     LaunchedEffect(Unit) {
         focusRequesterRecord.requestFocus()
     }
+
     LaunchedEffect(viewEffect) {
         when (viewEffect) {
             RecordingViewEffect.DoNothing -> {}
@@ -113,6 +114,7 @@ fun RecordingLayout(
 ) {
     val context = LocalContext.current
     val focusedItem = remember { mutableStateOf(Item.Record) }
+
     Box(modifier = Modifier.fillMaxSize()) {
         val resolution = viewState.settingsState.getResolutionSize()
 
@@ -141,18 +143,18 @@ fun RecordingLayout(
                 .padding(start = 26.dp, bottom = 26.dp)
         ) {
             IconButton(
-                onClick = { onEventHandler(RecordingViewEvent.NavigateToSettings) },
+                onClick = {
+                    onEventHandler(RecordingViewEvent.NavigateToSettings)
+                },
                 modifier = Modifier
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
                     .focusRequester(focusRequesterSettings)
                     .focusProperties {
-                        next = focusRequesterRecord
-                        previous = focusRequesterChart
+                        next = focusRequesterChart
+                        previous = focusRequesterRecord
                     }
-                    .onFocusChanged {
-                        focusedItem.value = Item.Setting
-                    }
+                    .onFocusChanged { focusedItem.value = Item.Setting }
                     .border(
                         width = if (focusedItem.value == Item.Setting) 8.dp else 0.dp,
                         color = White,
@@ -171,21 +173,17 @@ fun RecordingLayout(
 
             IconButton(
                 onClick = {
-                    if (!viewState.isRecording) {
-                        onEventHandler(RecordingViewEvent.NavigateToShowByChart)
-                    }
+                    onEventHandler(RecordingViewEvent.NavigateToShowByChart)
                 },
                 modifier = Modifier
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
                     .focusRequester(focusRequesterChart)
                     .focusProperties {
-                        next = focusRequesterSettings
-                        previous = focusRequesterRecord
+                        next = focusRequesterRecord
+                        previous = focusRequesterSettings
                     }
-                    .onFocusChanged {
-                        focusedItem.value = Item.Charts
-                    }
+                    .onFocusChanged { focusedItem.value = Item.Charts }
                     .border(
                         width = if (focusedItem.value == Item.Charts) 8.dp else 0.dp,
                         color = White,
@@ -220,12 +218,10 @@ fun RecordingLayout(
                     )
                     .focusRequester(focusRequesterRecord)
                     .focusProperties {
-                        next = focusRequesterChart
+                        next = focusRequesterSettings
                         previous = focusRequesterChart
                     }
-                    .onFocusChanged {
-                        focusedItem.value = Item.Record
-                    }
+                    .onFocusChanged { focusedItem.value = Item.Record }
                     .border(
                         width = if (focusedItem.value == Item.Record) 8.dp else 0.dp,
                         color = White,
