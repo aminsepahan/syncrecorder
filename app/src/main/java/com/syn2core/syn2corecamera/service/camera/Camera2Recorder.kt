@@ -143,15 +143,15 @@ class Camera2Recorder @Inject constructor(
                 ) {
                     frameTimestamps.add(Pair(frameNumber, timestamp))
 
-                    if (!didSendStart) {
-                        onStartTimestamp() // based on elapsedRealtimeNanos
-                        didSendStart = true
-                    }
-
                     if (!recorderStarted) {
                         mediaRecorder?.start()
                         recorderStarted = true
                         Timber.tag(TAG).d("🎬 MediaRecorder started at frame $frameNumber")
+                    }
+
+                    if (!didSendStart) {
+                        onStartTimestamp() // based on elapsedRealtimeNanos
+                        didSendStart = true
                     }
                 }
             },
