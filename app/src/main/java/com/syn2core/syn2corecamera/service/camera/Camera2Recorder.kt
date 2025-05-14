@@ -125,7 +125,7 @@ class Camera2Recorder @Inject constructor(
                 if (settings.stabilization) {
                     set(
                         CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
                     )
                 }
             }
@@ -146,7 +146,7 @@ class Camera2Recorder @Inject constructor(
                     if (!recorderStarted) {
                         mediaRecorder?.start()
                         recorderStarted = true
-                        Timber.tag(TAG).d("🎬 MediaRecorder started at frame $frameNumber")
+                        Timber.tag(TAG).d("MediaRecorder started at frame $frameNumber")
                     }
 
                     if (!didSendStart) {
@@ -184,6 +184,7 @@ class Camera2Recorder @Inject constructor(
 
         mediaRecorder = MediaRecorder().apply {
             setAudioSource(settings.getAudioSource())
+            setAudioSamplingRate(96000)
             setVideoSource(MediaRecorder.VideoSource.SURFACE)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             setOutputFile(file.absolutePath)
