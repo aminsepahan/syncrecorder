@@ -25,12 +25,12 @@ class RecordingSettingsPreferences @Inject constructor(
     suspend fun getSettings(): RecordingSettings {
         val prefs = dataStore.data.first()
         return RecordingSettings(
-            resolution = prefs[KEY_RESOLUTION] ?: "720p",
-            frameRate = prefs[KEY_FRAME_RATE] ?: 30,
+            resolution = prefs[KEY_RESOLUTION] ?: "1080p",
+            frameRate = prefs[KEY_FRAME_RATE] ?: 60,
             codec = prefs[KEY_CODEC] ?: "H264",
             autoFocus = prefs[KEY_AUTO_FOCUS] ?: true,
             stabilization = prefs[KEY_STABILIZATION] ?: true,
-            audioSource = prefs[KEY_AUDIO_SOURCE] ?: "MIC",
+            audioSource = prefs[KEY_AUDIO_SOURCE] ?: "CAMCORDER",
             imuFrequency = prefs[KEY_IMU_FREQ] ?: 100
         )
     }

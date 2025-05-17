@@ -6,11 +6,11 @@ import androidx.annotation.Keep
 
 @Keep
 data class RecordingSettings(
-    val resolution: String = "720p",
-    val frameRate: Int = 30,
+    val resolution: String = "1080p",
+    val frameRate: Int = 60,
     val codec: String = "H.264",
     val autoFocus: Boolean = true,
-    val stabilization: Boolean = false,
+    val stabilization: Boolean = true,
     val audioSource: String = "CAMCORDER",
     val imuFrequency: Int = 100
 ) {
@@ -26,7 +26,7 @@ data class RecordingSettings(
         10 -> SensorManager.SENSOR_DELAY_UI
         50 -> SensorManager.SENSOR_DELAY_GAME
         100 -> SensorManager.SENSOR_DELAY_FASTEST
-        else -> SensorManager.SENSOR_DELAY_UI
+        else -> SensorManager.SENSOR_DELAY_FASTEST
     }
 
     fun getAudioSource() = when (audioSource) {

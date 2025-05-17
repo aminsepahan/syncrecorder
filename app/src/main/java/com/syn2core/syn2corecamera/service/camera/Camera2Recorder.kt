@@ -13,6 +13,8 @@ import android.view.Surface
 import com.syn2core.syn2corecamera.TAG
 import com.syn2core.syn2corecamera.business.usecase.convert.ConvertFrameTimestampToSrtUseCase
 import com.syn2core.syn2corecamera.business.usecase.directory.GetSyn2CoreCameraDirectoryUseCase
+import com.syn2core.syn2corecamera.business.usecase.time.GetFormattedDateUseCase
+import com.syn2core.syn2corecamera.business.usecase.time.GetFormattedTimeUseCase
 import com.syn2core.syn2corecamera.domain.RecordingSettings
 import kotlinx.coroutines.suspendCancellableCoroutine
 import timber.log.Timber
@@ -28,6 +30,8 @@ class Camera2Recorder @Inject constructor(
     private val cameraManager: CameraManager,
     private val getSyn2CoreCameraDirectoryUseCase: GetSyn2CoreCameraDirectoryUseCase,
     private val convertFrameTimestampToSrtUseCase: ConvertFrameTimestampToSrtUseCase,
+    private val getFormattedDateUseCase: GetFormattedDateUseCase,
+    private val getFormattedTimeUseCase: GetFormattedTimeUseCase,
 ) {
     private var cameraDevice: CameraDevice? = null
     private var mediaRecorder: MediaRecorder? = null
@@ -164,9 +168,11 @@ class Camera2Recorder @Inject constructor(
             mediaRecorder?.apply {
                 stop()
                 saveFrameTimestamps()
+                val date = getFormattedDateUseCase()
+                val time = getFormattedTimeUseCase()
                 convertFrameTimestampToSrtUseCase(
-                    inputTxtName = "frame_timestamps.txt",
-                    outputSrtName = "frame_data.srt"
+                    inputTxtName = "frame_timestamps_${date}_${time}.txt",
+                    outputSrtName = "frame_data_${date}_${time}.srt"
                 )
                 reset()
                 finalizeCallback?.invoke()
@@ -231,7 +237,11 @@ class Camera2Recorder @Inject constructor(
         }
 
     private fun saveFrameTimestamps() {
-        val frameLogFile = File(getSyn2CoreCameraDirectoryUseCase(), "frame_timestamps.txt")
+
+        val date = getFormattedDateUseCase()
+        val time = getFormattedTimeUseCase()
+        val frameLogFile =
+            File(getSyn2CoreCameraDirectoryUseCase(), "frame_timestamps_${date}_${time}.txt")
         frameLogFile.bufferedWriter().use { writer ->
             writer.write("index,timestamp_ms\n")
             frameTimestamps.forEach {
