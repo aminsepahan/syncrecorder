@@ -24,6 +24,7 @@ materialIconsVersion = "1.8.1"
 navigationCompose = "2.9.0"
 workRuntimeKtx = "2.10.1"
 datastorePreferences = "1.1.6"
+rootencoderamin = "-SNAPSHOT"
 
 [libraries]
 androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "camera-core" }
@@ -41,6 +42,7 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 ffmpeg-kit-full-gpl = { module = "com.arthenica:ffmpeg-kit-full-gpl", version.ref = "ffmpegKitFullGpl" }
+rootencoder-amin = { module = "com.github.aminsepahan:RootEncoder-with-frame-timestamp-callback", version.ref = "rootencoderamin" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 mpandroidchart = { module = "com.github.PhilJay:MPAndroidChart", version.ref = "mpandroidchart" }

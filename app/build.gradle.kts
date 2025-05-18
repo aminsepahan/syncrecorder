@@ -104,6 +104,9 @@ dependencies {
     //==================== FFmpeg ====================
     implementation(libs.ffmpeg.kit.full.gpl)
 
+    //==================== FFmpeg ====================
+    implementation(libs.rootencoder.amin)
+
     //==================== Gson ====================
     implementation(libs.gson)
 
