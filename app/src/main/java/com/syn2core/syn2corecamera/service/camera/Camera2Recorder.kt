@@ -10,7 +10,6 @@ import android.media.MediaRecorder
 import android.os.Handler
 import android.os.Looper
 import android.view.Surface
-import com.syn2core.syn2corecamera.TAG
 import com.syn2core.syn2corecamera.business.usecase.convert.ConvertFrameTimestampToSrtUseCase
 import com.syn2core.syn2corecamera.business.usecase.directory.GetSyn2CoreCameraDirectoryUseCase
 import com.syn2core.syn2corecamera.domain.RecordingSettings
@@ -131,7 +130,7 @@ class Camera2Recorder @Inject constructor(
             }
 
         var didSendStart = false
-        var recorderStarted = false
+        mediaRecorder?.start()
         captureSession?.setRepeatingRequest(
             captureRequest.build(),
             object : CameraCaptureSession.CaptureCallback() {
@@ -142,12 +141,6 @@ class Camera2Recorder @Inject constructor(
                     frameNumber: Long
                 ) {
                     frameTimestamps.add(Pair(frameNumber, timestamp))
-
-                    if (!recorderStarted) {
-                        mediaRecorder?.start()
-                        recorderStarted = true
-                        Timber.tag(TAG).d("MediaRecorder started at frame $frameNumber")
-                    }
 
                     if (!didSendStart) {
                         onStartTimestamp() // based on elapsedRealtimeNanos
