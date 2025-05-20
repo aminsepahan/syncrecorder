@@ -8,7 +8,7 @@ import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
 import android.media.MediaRecorder
 import android.os.Handler
-import android.os.Looper
+import android.os.HandlerThread
 import android.view.Surface
 import com.syn2core.syn2corecamera.business.usecase.convert.ConvertFrameTimestampToSrtUseCase
 import com.syn2core.syn2corecamera.business.usecase.directory.GetSyn2CoreCameraDirectoryUseCase
@@ -36,6 +36,9 @@ class Camera2Recorder @Inject constructor(
     private var previewSurface: Surface? = null
 
     private val frameTimestamps = mutableListOf<Pair<Long, Long>>()
+
+    private val cameraHandlerThread = HandlerThread("CameraBackground").apply { start() }
+    private val cameraHandler = Handler(cameraHandlerThread.looper)
 
     private val cameraId: String by lazy {
         cameraManager.cameraIdList.first { id ->
@@ -65,7 +68,7 @@ class Camera2Recorder @Inject constructor(
                 cameraDevice = null
                 Timber.e("Camera open error: $error")
             }
-        }, Handler(Looper.getMainLooper()))
+        }, cameraHandler)
     }
 
     private fun createPreviewSession(surface: Surface) {
@@ -80,7 +83,7 @@ class Camera2Recorder @Inject constructor(
                     session.setRepeatingRequest(
                         previewRequest.build(),
                         null,
-                        Handler(Looper.getMainLooper())
+                        cameraHandler
                     )
                 }
 
@@ -88,7 +91,7 @@ class Camera2Recorder @Inject constructor(
                     Timber.e("Preview session configuration failed")
                 }
             },
-            Handler(Looper.getMainLooper())
+            cameraHandler
         )
     }
 
@@ -148,7 +151,7 @@ class Camera2Recorder @Inject constructor(
                     }
                 }
             },
-            Handler(Looper.getMainLooper())
+            cameraHandler
         )
     }
 
@@ -205,7 +208,7 @@ class Camera2Recorder @Inject constructor(
                     camera.close()
                     continuation.resumeWithException(RuntimeException("Camera error: $error"))
                 }
-            }, Handler(Looper.getMainLooper()))
+            }, cameraHandler)
         }
 
     private suspend fun createSessionSuspending(surfaces: List<Surface>): CameraCaptureSession =
@@ -219,7 +222,7 @@ class Camera2Recorder @Inject constructor(
                     override fun onConfigureFailed(session: CameraCaptureSession) =
                         continuation.resumeWithException(RuntimeException("Session config failed"))
                 },
-                Handler(Looper.getMainLooper())
+                cameraHandler
             )
         }
 
@@ -237,6 +240,7 @@ class Camera2Recorder @Inject constructor(
         mediaRecorder?.release()
         captureSession?.close()
         cameraDevice?.close()
+        cameraHandlerThread.quitSafely()
         mediaRecorder = null
         captureSession = null
         cameraDevice = null
