@@ -3,12 +3,9 @@ package com.syn2core.syn2corecamera.presentation.ui.setting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -16,7 +13,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -30,7 +26,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -38,6 +33,7 @@ import androidx.lifecycle.asFlow
 import com.syn2core.syn2corecamera.domain.RecordingSettings
 import com.syn2core.syn2corecamera.navigation.Router
 import com.syn2core.syn2corecamera.navigation.Screen
+import com.syn2core.syn2corecamera.presentation.components.AutoStopInput
 import com.syn2core.syn2corecamera.presentation.components.DropdownSelector
 
 @Composable
@@ -81,7 +77,11 @@ fun SettingLayout(
     var stabilization by remember(viewState.settingsState.stabilization) { mutableStateOf(viewState.settingsState.stabilization) }
     var audioSource by remember(viewState.settingsState.audioSource) { mutableStateOf(viewState.settingsState.audioSource) }
     var imuFrequency by remember(viewState.settingsState.imuFrequency) { mutableIntStateOf(viewState.settingsState.imuFrequency) }
-    var autoStopMinutes by remember(viewState.settingsState.autoStopMinutes) { mutableIntStateOf(viewState.settingsState.autoStopMinutes) }
+    var autoStopMinutes by remember(viewState.settingsState.autoStopMinutes) {
+        mutableIntStateOf(
+            viewState.settingsState.autoStopMinutes
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -108,7 +108,11 @@ fun SettingLayout(
                 horizontalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    DropdownSelector("Resolution", listOf("480p", "720p", "1080p", "4K"), resolution) {
+                    DropdownSelector(
+                        "Resolution",
+                        listOf("480p", "720p", "1080p", "4K"),
+                        resolution
+                    ) {
                         resolution = it
                     }
 
@@ -122,7 +126,11 @@ fun SettingLayout(
                 }
 
                 Column(modifier = Modifier.weight(1f)) {
-                    DropdownSelector("Audio Source", listOf("MIC", "CAMCORDER", "VOICE_RECOGNITION"), audioSource) {
+                    DropdownSelector(
+                        "Audio Source",
+                        listOf("MIC", "CAMCORDER", "VOICE_RECOGNITION"),
+                        audioSource
+                    ) {
                         audioSource = it
                     }
 
@@ -130,32 +138,27 @@ fun SettingLayout(
                         imuFrequency = it
                     }
 
-                    Row(
-                        Modifier.fillMaxWidth().padding(top = 10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.Top
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Checkbox(checked = autoFocus, onCheckedChange = { autoFocus = it })
                             Text("Auto Focus", fontSize = 16.sp)
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(checked = stabilization, onCheckedChange = { stabilization = it })
+                            Checkbox(
+                                checked = stabilization,
+                                onCheckedChange = { stabilization = it })
                             Text("Stabilization", fontSize = 16.sp)
                         }
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    OutlinedTextField(
-                        value = autoStopMinutes.toString(),
-                        onValueChange = {
-                            autoStopMinutes = it.toIntOrNull() ?: 0
-                        },
-                        label = { Text("Auto Stop (minutes)") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
+                Column(modifier = Modifier.weight(1f)) {
+                    AutoStopInput(
+                        value = autoStopMinutes,
+                        onValueChange = { autoStopMinutes = it }
                     )
                 }
             }
