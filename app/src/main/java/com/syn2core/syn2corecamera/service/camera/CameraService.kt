@@ -22,6 +22,11 @@ class CameraService @Inject constructor(
 ) {
     private var finalizeDeferred: CompletableDeferred<Unit>? = null
 
+    private var currentVideoFile: File? = null
+    private var segmentCount = 0
+    private var recordingSettings: RecordingSettings? = null
+    private var segmentStartTime = 0L
+
     fun startPreview(surface: Surface) {
         Timber.d("🔍 Starting camera preview")
         camera2Recorder.startPreview(surface)
@@ -33,12 +38,29 @@ class CameraService @Inject constructor(
         recordingSettings: RecordingSettings,
         finalizeVideo: () -> Unit
     ): String {
-        val directory = getSyn2CoreCameraDirectoryUseCase()
+        this.recordingSettings = recordingSettings
+        segmentCount = 0
+        segmentStartTime = System.currentTimeMillis()
+        return startNewSegment(surface, recordingCount, recordingSettings, finalizeVideo)
+    }
 
+    suspend fun stopRecordingAndWait() {
+        camera2Recorder.stopRecording()
+        finalizeDeferred?.await()
+    }
+
+    private suspend fun startNewSegment(
+        surface: Surface,
+        recordingCount: Int,
+        recordingSettings: RecordingSettings,
+        finalizeVideo: () -> Unit
+    ): String {
+        val directory = getSyn2CoreCameraDirectoryUseCase()
         val date = getFormattedDateUseCase()
         val time = getFormattedTimeUseCase()
-        val fileName = "s2c_${recordingCount}_${date}_${time}.mp4"
+        val fileName = "s2c_${recordingCount}_${segmentCount}_${date}_${time}.mp4"
         val videoFile = File(directory, fileName)
+        currentVideoFile = videoFile
 
         finalizeDeferred = CompletableDeferred()
 
@@ -57,11 +79,17 @@ class CameraService @Inject constructor(
             }
         )
 
+        segmentCount++
         return fileName
     }
 
-    suspend fun stopRecordingAndWait() {
+    suspend fun switchToNewSegment(
+        surface: Surface,
+        recordingCount: Int,
+        finalizeVideo: () -> Unit
+    ): String {
         camera2Recorder.stopRecording()
         finalizeDeferred?.await()
+        return startNewSegment(surface, recordingCount, recordingSettings!!, finalizeVideo)
     }
 }

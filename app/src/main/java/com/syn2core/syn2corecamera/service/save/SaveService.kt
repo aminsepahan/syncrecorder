@@ -31,20 +31,11 @@ class SaveService @Inject constructor(
                     embedSubtitleIntoVideoUseCase(
                         task.videoName,
                         subtitleFile,
-                        task.outputName,
+                        task.outputName
                     )
-
-                    /*val compressedVideoName = "compressed_${task.outputName}"
-                   val compressJob = async {
-                       videoCompressionUseCase(task.outputName, compressedVideoName)
-                   }
-                   compressJob.await()
-
-                   deleteOldVideoFiles(task.videoName, task.outputName)*/
-
                     onDone()
                 } catch (e: Exception) {
-                    Timber.tag(TAG).e(e)
+                    Timber.tag(TAG).e(e, "Failed to save task for ${task.videoName}")
                     onDone()
                 }
             }

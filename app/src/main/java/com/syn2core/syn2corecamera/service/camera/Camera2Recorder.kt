@@ -37,8 +37,8 @@ class Camera2Recorder @Inject constructor(
 
     private val frameTimestamps = mutableListOf<Pair<Long, Long>>()
 
-    private val cameraHandlerThread = HandlerThread("CameraBackground").apply { start() }
-    private val cameraHandler = Handler(cameraHandlerThread.looper)
+    private var cameraHandlerThread = HandlerThread("CameraBackground").apply { start() }
+    private var cameraHandler = Handler(cameraHandlerThread.looper)
 
     private val cameraId: String by lazy {
         cameraManager.cameraIdList.first { id ->
@@ -77,7 +77,8 @@ class Camera2Recorder @Inject constructor(
             object : CameraCaptureSession.StateCallback() {
                 override fun onConfigured(session: CameraCaptureSession) {
                     captureSession = session
-                    val previewRequest = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
+                    val previewRequest =
+                        cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
                             addTarget(surface)
                         }
                     session.setRepeatingRequest(
@@ -171,6 +172,7 @@ class Camera2Recorder @Inject constructor(
             Timber.e(e, "Failed to stop MediaRecorder")
         } finally {
             releaseResources()
+            restartCameraThread()
             previewSurface?.let { startPreview(it) }
         }
     }
@@ -244,5 +246,10 @@ class Camera2Recorder @Inject constructor(
         mediaRecorder = null
         captureSession = null
         cameraDevice = null
+    }
+
+    private fun restartCameraThread() {
+        cameraHandlerThread = HandlerThread("CameraBackground").apply { start() }
+        cameraHandler = Handler(cameraHandlerThread.looper)
     }
 }

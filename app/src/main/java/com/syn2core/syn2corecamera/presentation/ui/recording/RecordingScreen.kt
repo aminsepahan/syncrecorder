@@ -249,7 +249,6 @@ fun RecordingLayout(
             }
         }
     }
-
 }
 
 enum class Item {

@@ -12,6 +12,7 @@ import com.syn2core.syn2corecamera.service.durationmillis.DurationMillisService
 import com.syn2core.syn2corecamera.service.save.SaveService
 import com.syn2core.syn2corecamera.service.sensor.SensorService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -113,7 +114,7 @@ class RecordingViewModel @Inject constructor(
     }
 
     private fun stopAll() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             autoRestartJob?.cancel()
             autoRestartJob = null
             durationMillisService.stop()
@@ -121,9 +122,11 @@ class RecordingViewModel @Inject constructor(
             updateState { it.copy(isSaving = true) }
 
             val currentCount = _state.value.recordingCount
-
             cameraService.stopRecordingAndWait()
             sensorService.stopSensors(currentCount)
+
+            updateState { it.copy(isRecording = false, recordingCount = it.recordingCount + 1) }
+            effect.postValue(RecordingViewEffect.RecordingStopped)
 
             val originalName = recordingVideoName
             val embeddedName = originalName.replace("s2c_", "s2c_embedded_")
@@ -135,50 +138,35 @@ class RecordingViewModel @Inject constructor(
                 ),
                 onDone = { updateState { it.copy(isSaving = false) } }
             )
-
-            updateState {
-                it.copy(isRecording = false, recordingCount = it.recordingCount + 1)
-            }
-
-            effect.postValue(RecordingViewEffect.RecordingStopped)
         }
     }
 
     private fun startAutoRestartLoop(surface: Surface, settings: RecordingSettings) {
         autoRestartJob?.cancel()
+        autoRestartJob = viewModelScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                delay(settings.autoStopMinutes * 60 * 1000L)
 
-        cameraSurface?.let {
-            autoRestartJob = viewModelScope.launch {
-                while (isActive) {
-                    delay(settings.autoStopMinutes * 60 * 1000L)
+                val count = _state.value.recordingCount
+                val originalName = recordingVideoName
 
-                    val count = _state.value.recordingCount
+                recordingVideoName = cameraService.switchToNewSegment(
+                    surface = surface,
+                    recordingCount = count,
+                    finalizeVideo = {}
+                )
 
-                    cameraService.stopRecordingAndWait()
-                    sensorService.stopSensors(count)
+                val embeddedName = originalName.replace("s2c_", "s2c_embedded_")
+                saveService.addTask(
+                    SaveTask(
+                        videoName = originalName,
+                        outputName = embeddedName,
+                        recordingCount = count
+                    ),
+                    onDone = { updateState { it.copy(isSaving = false) } }
+                )
 
-                    val originalName = recordingVideoName
-                    val embeddedName = originalName.replace("s2c_", "s2c_embedded_")
-                    saveService.addTask(
-                        SaveTask(
-                            videoName = originalName,
-                            outputName = embeddedName,
-                            recordingCount = count
-                        ),
-                        onDone = { updateState { it.copy(isSaving = false) } }
-                    )
-
-                    updateState { it.copy(recordingCount = it.recordingCount + 1) }
-
-                    val newSettings = getRecordingSettingsUseCase()
-
-                    cameraService.startRecordingAndSensors(
-                        surface = surface,
-                        recordingCount = _state.value.recordingCount,
-                        recordingSettings = newSettings,
-                        finalizeVideo = {}
-                    )
-                }
+                updateState { it.copy(recordingCount = it.recordingCount + 1) }
             }
         }
     }
