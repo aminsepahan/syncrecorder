@@ -12,7 +12,8 @@ data class RecordingSettings(
     val autoFocus: Boolean = true,
     val stabilization: Boolean = false,
     val audioSource: String = "CAMCORDER",
-    val imuFrequency: Int = 100
+    val imuFrequency: Int = 100,
+    val autoStopMinutes: Int = 30
 ) {
     fun getResolutionSize(): Pair<Int, Int> = when (resolution) {
         "480p" -> 720 to 480

@@ -150,7 +150,7 @@ class RecordingViewModel @Inject constructor(
         cameraSurface?.let {
             autoRestartJob = viewModelScope.launch {
                 while (isActive) {
-                    delay(30 * 60 * 1000L) // 30 minutes
+                    delay(settings.autoStopMinutes * 60 * 1000L)
 
                     val count = _state.value.recordingCount
 

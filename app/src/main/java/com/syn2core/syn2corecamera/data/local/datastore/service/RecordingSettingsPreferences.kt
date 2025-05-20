@@ -20,6 +20,7 @@ class RecordingSettingsPreferences @Inject constructor(
         val KEY_STABILIZATION = booleanPreferencesKey("stabilization")
         val KEY_AUDIO_SOURCE = stringPreferencesKey("audio_source")
         val KEY_IMU_FREQ = intPreferencesKey("imu_freq")
+        val KEY_AUTO_STOP_MINUTES = intPreferencesKey("auto_stop_minutes")
     }
 
     suspend fun getSettings(): RecordingSettings {
@@ -31,7 +32,8 @@ class RecordingSettingsPreferences @Inject constructor(
             autoFocus = prefs[KEY_AUTO_FOCUS] ?: true,
             stabilization = prefs[KEY_STABILIZATION] ?: true,
             audioSource = prefs[KEY_AUDIO_SOURCE] ?: "MIC",
-            imuFrequency = prefs[KEY_IMU_FREQ] ?: 100
+            imuFrequency = prefs[KEY_IMU_FREQ] ?: 100,
+            autoStopMinutes = prefs[KEY_AUTO_STOP_MINUTES] ?: 30
         )
     }
 
@@ -45,6 +47,7 @@ class RecordingSettingsPreferences @Inject constructor(
                 this[KEY_STABILIZATION] = settings.stabilization
                 this[KEY_AUDIO_SOURCE] = settings.audioSource
                 this[KEY_IMU_FREQ] = settings.imuFrequency
+                this[KEY_AUTO_STOP_MINUTES] = settings.autoStopMinutes
             }
         }
     }
