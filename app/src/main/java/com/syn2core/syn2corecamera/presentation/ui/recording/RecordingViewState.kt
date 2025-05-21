@@ -15,6 +15,7 @@ data class RecordingViewState(
     val settingsState: RecordingSettings = RecordingSettings(),
     val recordingCount: Int = 1,
     val isSaving: Boolean = false,
+    val pendingSaveTasks: Int = 0
 ) : BaseViewState {
     val formattedDuration: String
         get() = durationMillis.formatAsDuration()

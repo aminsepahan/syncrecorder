@@ -17,7 +17,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun SavingOverlay(modifier: Modifier) {
+fun SavingOverlay(
+    modifier: Modifier,
+    message: String = "Saving..."
+) {
     Column(
         modifier = modifier
             .background(Color.Black.copy(alpha = 0.7f), shape = RoundedCornerShape(12.dp))
@@ -31,7 +34,7 @@ fun SavingOverlay(modifier: Modifier) {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Saving...",
+            text = message,
             color = Color.White,
             fontSize = 18.sp
         )

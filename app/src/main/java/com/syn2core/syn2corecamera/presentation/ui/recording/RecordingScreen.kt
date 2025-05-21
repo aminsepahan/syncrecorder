@@ -238,16 +238,20 @@ fun RecordingLayout(
         }
 
         AnimatedVisibility(
-            visible = viewState.isSaving,
+            visible = viewState.isSaving || viewState.pendingSaveTasks > 0,
             enter = fadeIn(animationSpec = tween(600)) + scaleIn(initialScale = 0.8f),
             exit = fadeOut(animationSpec = tween(600)) + scaleOut(targetScale = 0.8f)
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 SavingOverlay(
                     modifier = Modifier.align(Alignment.Center),
+                    message = if (viewState.pendingSaveTasks > 0)
+                        "Saving ${viewState.pendingSaveTasks} file."
+                    else "Saving..."
                 )
             }
         }
+
     }
 }
 
