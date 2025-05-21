@@ -18,6 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -106,6 +107,13 @@ class RecordingViewModel @Inject constructor(
             }
 
             saveService.startService(viewModelScope)
+
+            viewModelScope.launch {
+                saveService.queueSize.collectLatest { size ->
+                    updateState { it.copy(pendingSaveTasks = size) }
+                }
+            }
+
             startAutoRestartLoop(surface, settings)
 
             updateState { it.copy(isRecording = true, durationMillis = 0L) }
@@ -122,22 +130,24 @@ class RecordingViewModel @Inject constructor(
             updateState { it.copy(isSaving = true) }
 
             val currentCount = _state.value.recordingCount
-            cameraService.stopRecordingAndWait()
+            val stoppedFile = cameraService.stopAndGetCurrentVideoFile()
             sensorService.stopSensors(currentCount)
 
             updateState { it.copy(isRecording = false, recordingCount = it.recordingCount + 1) }
             effect.postValue(RecordingViewEffect.RecordingStopped)
 
-            val originalName = recordingVideoName
-            val embeddedName = originalName.replace("s2c_", "s2c_embedded_")
-            saveService.addTask(
-                SaveTask(
-                    videoName = originalName,
-                    outputName = embeddedName,
-                    recordingCount = currentCount
-                ),
-                onDone = { updateState { it.copy(isSaving = false) } }
-            )
+            stoppedFile?.let { file ->
+                val originalName = file.name
+                val embeddedName = originalName.replace("s2c_", "s2c_embedded_")
+                saveService.addTask(
+                    SaveTask(
+                        videoName = originalName,
+                        outputName = embeddedName,
+                        recordingCount = currentCount
+                    ),
+                    onDone = { updateState { it.copy(isSaving = false) } }
+                )
+            }
         }
     }
 
@@ -145,7 +155,7 @@ class RecordingViewModel @Inject constructor(
         autoRestartJob?.cancel()
         autoRestartJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
-                delay(settings.autoStopMinutes * 60 * 1000L)
+                delay(30 * 60 * 1000L)
 
                 val count = _state.value.recordingCount
                 val originalName = recordingVideoName

@@ -50,6 +50,8 @@ class EmbedSubtitleIntoVideoUseCase @Inject constructor(
                     val returnCode = session.returnCode
                     if (ReturnCode.isSuccess(returnCode)) {
                         Timber.tag(TAG).d("✅ Subtitle embedded successfully into video.")
+                        videoFile.delete()
+                        subtitleFile.delete()
                         continuation.resume(Unit)
                     } else {
                         Timber.tag(TAG).e("❌ FFmpeg failed: ${session.failStackTrace}")

@@ -5,6 +5,8 @@ import com.syn2core.syn2corecamera.business.usecase.directory.GetSyn2CoreCameraD
 import com.syn2core.syn2corecamera.business.usecase.time.GetFormattedDateUseCase
 import com.syn2core.syn2corecamera.business.usecase.time.GetFormattedTimeUseCase
 import com.syn2core.syn2corecamera.domain.RecordingSettings
+import com.syn2core.syn2corecamera.domain.SaveTask
+import com.syn2core.syn2corecamera.service.save.SaveService
 import com.syn2core.syn2corecamera.service.sensor.SensorService
 import kotlinx.coroutines.CompletableDeferred
 import timber.log.Timber
@@ -18,7 +20,8 @@ class CameraService @Inject constructor(
     private val getFormattedDateUseCase: GetFormattedDateUseCase,
     private val getFormattedTimeUseCase: GetFormattedTimeUseCase,
     private val camera2Recorder: Camera2Recorder,
-    private val sensorService: SensorService
+    private val sensorService: SensorService,
+    private val saveService: SaveService
 ) {
     private var finalizeDeferred: CompletableDeferred<Unit>? = null
 
@@ -47,6 +50,10 @@ class CameraService @Inject constructor(
     suspend fun stopRecordingAndWait() {
         camera2Recorder.stopRecording()
         finalizeDeferred?.await()
+    }
+
+    fun stopAndGetCurrentVideoFile(): File? {
+        return camera2Recorder.stopRecordingFast()
     }
 
     private suspend fun startNewSegment(
@@ -88,8 +95,21 @@ class CameraService @Inject constructor(
         recordingCount: Int,
         finalizeVideo: () -> Unit
     ): String {
-        camera2Recorder.stopRecording()
-        finalizeDeferred?.await()
-        return startNewSegment(surface, recordingCount, recordingSettings!!, finalizeVideo)
+        val stoppedFile = camera2Recorder.stopRecordingFast()
+        val fileName = stoppedFile?.name
+        val recordingSettings = recordingSettings!!
+
+        if (fileName != null) {
+            val embeddedName = fileName.replace("s2c_", "s2c_embedded_")
+            saveService.addTask(
+                SaveTask(
+                    videoName = fileName,
+                    outputName = embeddedName,
+                    recordingCount = recordingCount
+                )
+            )
+        }
+
+        return startNewSegment(surface, recordingCount, recordingSettings, finalizeVideo)
     }
 }

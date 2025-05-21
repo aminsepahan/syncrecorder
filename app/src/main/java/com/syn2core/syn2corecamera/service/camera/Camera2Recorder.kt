@@ -177,6 +177,29 @@ class Camera2Recorder @Inject constructor(
         }
     }
 
+    fun stopRecordingFast(): File? {
+        return try {
+            mediaRecorder?.apply {
+                stop()
+                saveFrameTimestamps()
+                convertFrameTimestampToSrtUseCase(
+                    inputTxtName = "frame_timestamps.txt",
+                    outputSrtName = "frame_data.srt"
+                )
+                reset()
+                finalizeCallback?.invoke()
+            }
+            outputFile
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to stop MediaRecorder")
+            null
+        } finally {
+            releaseResources()
+            restartCameraThread()
+            previewSurface?.let { startPreview(it) }
+        }
+    }
+
     private fun setupMediaRecorder(file: File, settings: RecordingSettings) {
         val (width, height) = settings.getResolutionSize()
 
