@@ -48,7 +48,6 @@ class RecordingViewModel @Inject constructor(
 
     private var cameraSurface: Surface? = null
     private var autoRestartJob: Job? = null
-
     private var recordingVideoName: String = ""
 
     private val segmentMutex = Mutex()
@@ -136,6 +135,9 @@ class RecordingViewModel @Inject constructor(
 
                 val currentCount = _state.value.recordingCount
                 val stoppedFile = cameraService.stopAndGetCurrentVideoFile()
+
+                cameraService.camera2Recorder.finalizeDeferred?.await()
+
                 sensorService.stopSensors(currentCount)
 
                 updateState { it.copy(isRecording = false, recordingCount = it.recordingCount + 1) }

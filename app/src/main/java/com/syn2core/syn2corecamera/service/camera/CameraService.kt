@@ -8,7 +8,6 @@ import com.syn2core.syn2corecamera.domain.RecordingSettings
 import com.syn2core.syn2corecamera.domain.SaveTask
 import com.syn2core.syn2corecamera.service.save.SaveService
 import com.syn2core.syn2corecamera.service.sensor.SensorService
-import kotlinx.coroutines.CompletableDeferred
 import timber.log.Timber
 import java.io.File
 import javax.inject.Inject
@@ -19,16 +18,13 @@ class CameraService @Inject constructor(
     private val getSyn2CoreCameraDirectoryUseCase: GetSyn2CoreCameraDirectoryUseCase,
     private val getFormattedDateUseCase: GetFormattedDateUseCase,
     private val getFormattedTimeUseCase: GetFormattedTimeUseCase,
-    private val camera2Recorder: Camera2Recorder,
+    val camera2Recorder: Camera2Recorder,
     private val sensorService: SensorService,
     private val saveService: SaveService
 ) {
-    private var finalizeDeferred: CompletableDeferred<Unit>? = null
-
     private var currentVideoFile: File? = null
     private var segmentCount = 0
     private var recordingSettings: RecordingSettings? = null
-    private var segmentStartTime = 0L
 
     fun startPreview(surface: Surface) {
         Timber.d("🔍 Starting camera preview")
@@ -43,7 +39,6 @@ class CameraService @Inject constructor(
     ): String {
         this.recordingSettings = recordingSettings
         segmentCount = 0
-        segmentStartTime = System.currentTimeMillis()
         return startNewSegment(surface, recordingCount, recordingSettings, finalizeVideo)
     }
 
@@ -64,8 +59,6 @@ class CameraService @Inject constructor(
         val videoFile = File(directory, fileName)
         currentVideoFile = videoFile
 
-        finalizeDeferred = CompletableDeferred()
-
         camera2Recorder.startRecording(
             surface = surface,
             outputFile = videoFile,
@@ -77,7 +70,6 @@ class CameraService @Inject constructor(
             },
             onFinalize = {
                 finalizeVideo()
-                finalizeDeferred?.complete(Unit)
             }
         )
 
@@ -91,6 +83,9 @@ class CameraService @Inject constructor(
         finalizeVideo: () -> Unit
     ): String {
         val stoppedFile = camera2Recorder.stopRecording()
+
+        camera2Recorder.finalizeDeferred?.await()
+
         val fileName = stoppedFile?.name
         val recordingSettings = recordingSettings!!
 

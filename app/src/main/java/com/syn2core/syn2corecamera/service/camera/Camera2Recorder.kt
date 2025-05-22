@@ -1,7 +1,6 @@
 package com.syn2core.syn2corecamera.service.camera
 
 import android.annotation.SuppressLint
-import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
@@ -11,10 +10,10 @@ import android.media.MediaRecorder
 import android.os.Handler
 import android.os.HandlerThread
 import android.view.Surface
-import com.syn2core.syn2corecamera.TAG
 import com.syn2core.syn2corecamera.business.usecase.convert.ConvertFrameTimestampToSrtUseCase
 import com.syn2core.syn2corecamera.business.usecase.directory.GetSyn2CoreCameraDirectoryUseCase
 import com.syn2core.syn2corecamera.domain.RecordingSettings
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -38,40 +37,24 @@ class Camera2Recorder @Inject constructor(
     private var outputFile: File? = null
     private var finalizeCallback: (() -> Unit)? = null
     private var previewSurface: Surface? = null
+    var finalizeDeferred: CompletableDeferred<Unit>? = null
+        private set
 
     private val frameTimestamps = mutableListOf<Pair<Long, Long>>()
 
-    private var cameraHandlerThread = HandlerThread("CameraBackground").apply { start() }
-    private var cameraHandler = Handler(cameraHandlerThread.looper)
+    private val cameraHandlerThread = HandlerThread("CameraBackground").apply { start() }
+    private val cameraHandler = Handler(cameraHandlerThread.looper)
 
     private val cameraId: String by lazy {
-        val id = cameraManager.cameraIdList.first { id ->
-            val characteristics = cameraManager.getCameraCharacteristics(id)
-            val facing = characteristics.get(CameraCharacteristics.LENS_FACING)
-            facing == CameraCharacteristics.LENS_FACING_BACK
+        cameraManager.cameraIdList.first {
+            val characteristics = cameraManager.getCameraCharacteristics(it)
+            characteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK
         }
-        val characteristics = cameraManager.getCameraCharacteristics(id)
-        val level = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL)
-        when (level) {
-            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY -> {
-                Timber.tag(TAG).w("Camera2 API is in LEGACY mode, some features may not work")
-            }
-            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED -> {
-                Timber.tag(TAG).w("Camera2 API is in LIMITED mode, some features may be restricted")
-            }
-            else -> {
-                Timber.tag(TAG).d("Camera2 API is in FULL or LEVEL_3 mode")
-            }
-        }
-        id
     }
 
     @SuppressLint("MissingPermission")
     fun startPreview(surface: Surface) {
         previewSurface = surface
-
-        releaseResources()
-
         cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
             override fun onOpened(device: CameraDevice) {
                 cameraDevice = device
@@ -97,15 +80,10 @@ class Camera2Recorder @Inject constructor(
             object : CameraCaptureSession.StateCallback() {
                 override fun onConfigured(session: CameraCaptureSession) {
                     captureSession = session
-                    val previewRequest =
-                        cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
-                            addTarget(surface)
-                        }
-                    session.setRepeatingRequest(
-                        previewRequest.build(),
-                        null,
-                        cameraHandler
-                    )
+                    val request = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
+                        addTarget(surface)
+                    }
+                    session.setRepeatingRequest(request.build(), null, cameraHandler)
                 }
 
                 override fun onConfigureFailed(session: CameraCaptureSession) {
@@ -116,7 +94,6 @@ class Camera2Recorder @Inject constructor(
         )
     }
 
-    @SuppressLint("MissingPermission")
     suspend fun startRecording(
         surface: Surface,
         outputFile: File,
@@ -124,12 +101,11 @@ class Camera2Recorder @Inject constructor(
         onStartTimestamp: () -> Unit,
         onFinalize: () -> Unit
     ) {
-        releaseResources()
-
         frameTimestamps.clear()
         setupMediaRecorder(outputFile, settings)
         this.outputFile = outputFile
         this.finalizeCallback = onFinalize
+        finalizeDeferred = CompletableDeferred()
 
         val recorderSurface = mediaRecorder!!.surface
         val surfaces = listOf(surface, recorderSurface)
@@ -137,39 +113,26 @@ class Camera2Recorder @Inject constructor(
         cameraDevice = openCameraSuspending()
         captureSession = createSessionSuspending(surfaces)
 
-        val captureRequest =
-            cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
-                addTarget(surface)
-                addTarget(recorderSurface)
-                if (settings.autoFocus) {
-                    set(
-                        CaptureRequest.CONTROL_AF_MODE,
-                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
-                    )
-                }
-                if (settings.stabilization) {
-                    set(
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
-                    )
-                }
+        val request = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
+            addTarget(surface)
+            addTarget(recorderSurface)
+            if (settings.autoFocus) {
+                set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
             }
+            if (settings.stabilization) {
+                set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE, CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF)
+            }
+        }
 
         var didSendStart = false
         mediaRecorder?.start()
         captureSession?.setRepeatingRequest(
-            captureRequest.build(),
+            request.build(),
             object : CameraCaptureSession.CaptureCallback() {
-                override fun onCaptureStarted(
-                    session: CameraCaptureSession,
-                    request: CaptureRequest,
-                    timestamp: Long,
-                    frameNumber: Long
-                ) {
+                override fun onCaptureStarted(session: CameraCaptureSession, request: CaptureRequest, timestamp: Long, frameNumber: Long) {
                     frameTimestamps.add(Pair(frameNumber, timestamp))
-
                     if (!didSendStart) {
-                        onStartTimestamp() // based on elapsedRealtimeNanos
+                        onStartTimestamp()
                         didSendStart = true
                     }
                 }
@@ -181,126 +144,80 @@ class Camera2Recorder @Inject constructor(
     fun stopRecording(): File? {
         return try {
             mediaRecorder?.apply {
-                Timber.d("Stopping MediaRecorder")
                 stop()
                 saveFrameTimestamps()
-                val srtFile = File(getSyn2CoreCameraDirectoryUseCase(), "frame_data.srt")
-                if (srtFile.exists()) {
-                    convertFrameTimestampToSrtUseCase(
-                        inputTxtName = "frame_timestamps.txt",
-                        outputSrtName = "frame_data.srt"
-                    )
-                } else {
-                    Timber.w("SRT file not found, skipping conversion: ${srtFile.absolutePath}")
-                }
+                convertFrameTimestampToSrtUseCase(
+                    inputTxtName = "frame_timestamps.txt",
+                    outputSrtName = "frame_data.srt"
+                )
                 reset()
                 finalizeCallback?.invoke()
+                finalizeDeferred?.complete(Unit)
             }
             synchronized(frameTimestamps) { frameTimestamps.clear() }
-            Timber.d("MediaRecorder stopped successfully")
             outputFile
         } catch (e: Exception) {
             Timber.e(e, "Failed to stop MediaRecorder")
+            finalizeDeferred?.completeExceptionally(e)
             null
-        } finally {
-            releaseResources()
-            restartCameraThread()
-            previewSurface?.let { startPreview(it) }
         }
     }
 
-    private suspend fun setupMediaRecorder(file: File, settings: RecordingSettings) = withContext(
-        Dispatchers.IO) {
+    private suspend fun setupMediaRecorder(file: File, settings: RecordingSettings) = withContext(Dispatchers.IO) {
         val (width, height) = settings.getResolutionSize()
         mediaRecorder = MediaRecorder().apply {
-            try {
-                setAudioSource(settings.getAudioSource())
-                setAudioSamplingRate(96000)
-                setVideoSource(MediaRecorder.VideoSource.SURFACE)
-                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                setOutputFile(file.absolutePath)
-                setVideoEncodingBitRate(10000000)
-                setVideoFrameRate(settings.frameRate)
-                setVideoSize(width, height)
-                setVideoEncoder(settings.getCodec())
-                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                setOrientationHint(0)
-                prepare()
-            } catch (e: Exception) {
-                Timber.tag(TAG).e(e, "Failed to prepare MediaRecorder")
-                release()
-                throw e
-            }
+            setAudioSource(settings.getAudioSource())
+            setAudioSamplingRate(96000)
+            setVideoSource(MediaRecorder.VideoSource.SURFACE)
+            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            setOutputFile(file.absolutePath)
+            setVideoEncodingBitRate(10000000)
+            setVideoFrameRate(settings.frameRate)
+            setVideoSize(width, height)
+            setVideoEncoder(settings.getCodec())
+            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            setOrientationHint(0)
+            prepare()
         }
     }
 
-    @SuppressLint("MissingPermission")
     private suspend fun openCameraSuspending(): CameraDevice =
-        suspendCancellableCoroutine { continuation ->
+        suspendCancellableCoroutine { cont ->
             cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
-                override fun onOpened(camera: CameraDevice) = continuation.resume(camera)
+                override fun onOpened(camera: CameraDevice) = cont.resume(camera)
                 override fun onDisconnected(camera: CameraDevice) {
                     camera.close()
-                    continuation.cancel()
+                    cont.cancel()
                 }
 
                 override fun onError(camera: CameraDevice, error: Int) {
                     camera.close()
-                    continuation.resumeWithException(RuntimeException("Camera error: $error"))
+                    cont.resumeWithException(RuntimeException("Camera error: $error"))
                 }
             }, cameraHandler)
         }
 
     private suspend fun createSessionSuspending(surfaces: List<Surface>): CameraCaptureSession =
-        suspendCancellableCoroutine { continuation ->
+        suspendCancellableCoroutine { cont ->
             cameraDevice?.createCaptureSession(
                 surfaces,
                 object : CameraCaptureSession.StateCallback() {
-                    override fun onConfigured(session: CameraCaptureSession) =
-                        continuation.resume(session)
-
+                    override fun onConfigured(session: CameraCaptureSession) = cont.resume(session)
                     override fun onConfigureFailed(session: CameraCaptureSession) =
-                        continuation.resumeWithException(RuntimeException("Session config failed"))
+                        cont.resumeWithException(RuntimeException("Session config failed"))
                 },
                 cameraHandler
             )
         }
 
     private fun saveFrameTimestamps() {
-        val frameLogFile = File(getSyn2CoreCameraDirectoryUseCase(), "frame_timestamps.txt")
-        val timestampsCopy = synchronized(frameTimestamps) { ArrayList(frameTimestamps) }
-        frameLogFile.bufferedWriter().use { writer ->
-            writer.write("index,timestamp_ms\n")
-            timestampsCopy.forEach {
-                writer.write("${it.first + 1},${it.second}\n")
+        val file = File(getSyn2CoreCameraDirectoryUseCase(), "frame_timestamps.txt")
+        val list = synchronized(frameTimestamps) { ArrayList(frameTimestamps) }
+        file.bufferedWriter().use {
+            it.write("index,timestamp_ms\n")
+            list.forEach { (frame, timestamp) ->
+                it.write("${frame + 1},${timestamp}\n")
             }
         }
-    }
-
-    private fun releaseResources() {
-        try {
-            captureSession?.stopRepeating()
-        } catch (e: CameraAccessException) {
-            Timber.e(e, "Failed to stop repeating: ${e.message}")
-        }
-        try {
-            captureSession?.close()
-        } catch (e: CameraAccessException) {
-            Timber.e(e, "Failed to close capture session: ${e.message}")
-        }
-        try {
-            cameraDevice?.close()
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to close camera device: ${e.message}")
-        }
-        cameraHandlerThread.quitSafely()
-        mediaRecorder = null
-        captureSession = null
-        cameraDevice = null
-    }
-
-    private fun restartCameraThread() {
-        cameraHandlerThread = HandlerThread("CameraBackground").apply { start() }
-        cameraHandler = Handler(cameraHandlerThread.looper)
     }
 }
