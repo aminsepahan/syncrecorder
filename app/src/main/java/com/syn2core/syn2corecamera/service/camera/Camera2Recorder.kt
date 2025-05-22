@@ -1,6 +1,7 @@
 package com.syn2core.syn2corecamera.service.camera
 
 import android.annotation.SuppressLint
+import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
@@ -10,10 +11,13 @@ import android.media.MediaRecorder
 import android.os.Handler
 import android.os.HandlerThread
 import android.view.Surface
+import com.syn2core.syn2corecamera.TAG
 import com.syn2core.syn2corecamera.business.usecase.convert.ConvertFrameTimestampToSrtUseCase
 import com.syn2core.syn2corecamera.business.usecase.directory.GetSyn2CoreCameraDirectoryUseCase
 import com.syn2core.syn2corecamera.domain.RecordingSettings
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
 import javax.inject.Inject
@@ -41,16 +45,32 @@ class Camera2Recorder @Inject constructor(
     private var cameraHandler = Handler(cameraHandlerThread.looper)
 
     private val cameraId: String by lazy {
-        cameraManager.cameraIdList.first { id ->
+        val id = cameraManager.cameraIdList.first { id ->
             val characteristics = cameraManager.getCameraCharacteristics(id)
             val facing = characteristics.get(CameraCharacteristics.LENS_FACING)
             facing == CameraCharacteristics.LENS_FACING_BACK
         }
+        val characteristics = cameraManager.getCameraCharacteristics(id)
+        val level = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL)
+        when (level) {
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY -> {
+                Timber.tag(TAG).w("Camera2 API is in LEGACY mode, some features may not work")
+            }
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED -> {
+                Timber.tag(TAG).w("Camera2 API is in LIMITED mode, some features may be restricted")
+            }
+            else -> {
+                Timber.tag(TAG).d("Camera2 API is in FULL or LEVEL_3 mode")
+            }
+        }
+        id
     }
 
     @SuppressLint("MissingPermission")
     fun startPreview(surface: Surface) {
         previewSurface = surface
+
+        releaseResources()
 
         cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
             override fun onOpened(device: CameraDevice) {
@@ -104,6 +124,8 @@ class Camera2Recorder @Inject constructor(
         onStartTimestamp: () -> Unit,
         onFinalize: () -> Unit
     ) {
+        releaseResources()
+
         frameTimestamps.clear()
         setupMediaRecorder(outputFile, settings)
         this.outputFile = outputFile
@@ -156,39 +178,26 @@ class Camera2Recorder @Inject constructor(
         )
     }
 
-    fun stopRecording() {
-        try {
-            mediaRecorder?.apply {
-                stop()
-                saveFrameTimestamps()
-                convertFrameTimestampToSrtUseCase(
-                    inputTxtName = "frame_timestamps.txt",
-                    outputSrtName = "frame_data.srt"
-                )
-                reset()
-                finalizeCallback?.invoke()
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to stop MediaRecorder")
-        } finally {
-            releaseResources()
-            restartCameraThread()
-            previewSurface?.let { startPreview(it) }
-        }
-    }
-
-    fun stopRecordingFast(): File? {
+    fun stopRecording(): File? {
         return try {
             mediaRecorder?.apply {
+                Timber.d("Stopping MediaRecorder")
                 stop()
                 saveFrameTimestamps()
-                convertFrameTimestampToSrtUseCase(
-                    inputTxtName = "frame_timestamps.txt",
-                    outputSrtName = "frame_data.srt"
-                )
+                val srtFile = File(getSyn2CoreCameraDirectoryUseCase(), "frame_data.srt")
+                if (srtFile.exists()) {
+                    convertFrameTimestampToSrtUseCase(
+                        inputTxtName = "frame_timestamps.txt",
+                        outputSrtName = "frame_data.srt"
+                    )
+                } else {
+                    Timber.w("SRT file not found, skipping conversion: ${srtFile.absolutePath}")
+                }
                 reset()
                 finalizeCallback?.invoke()
             }
+            synchronized(frameTimestamps) { frameTimestamps.clear() }
+            Timber.d("MediaRecorder stopped successfully")
             outputFile
         } catch (e: Exception) {
             Timber.e(e, "Failed to stop MediaRecorder")
@@ -200,22 +209,28 @@ class Camera2Recorder @Inject constructor(
         }
     }
 
-    private fun setupMediaRecorder(file: File, settings: RecordingSettings) {
+    private suspend fun setupMediaRecorder(file: File, settings: RecordingSettings) = withContext(
+        Dispatchers.IO) {
         val (width, height) = settings.getResolutionSize()
-
         mediaRecorder = MediaRecorder().apply {
-            setAudioSource(settings.getAudioSource())
-            setAudioSamplingRate(96000)
-            setVideoSource(MediaRecorder.VideoSource.SURFACE)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setOutputFile(file.absolutePath)
-            setVideoEncodingBitRate(10000000)
-            setVideoFrameRate(settings.frameRate)
-            setVideoSize(width, height)
-            setVideoEncoder(settings.getCodec())
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            setOrientationHint(0)
-            prepare()
+            try {
+                setAudioSource(settings.getAudioSource())
+                setAudioSamplingRate(96000)
+                setVideoSource(MediaRecorder.VideoSource.SURFACE)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setOutputFile(file.absolutePath)
+                setVideoEncodingBitRate(10000000)
+                setVideoFrameRate(settings.frameRate)
+                setVideoSize(width, height)
+                setVideoEncoder(settings.getCodec())
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setOrientationHint(0)
+                prepare()
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Failed to prepare MediaRecorder")
+                release()
+                throw e
+            }
         }
     }
 
@@ -253,18 +268,31 @@ class Camera2Recorder @Inject constructor(
 
     private fun saveFrameTimestamps() {
         val frameLogFile = File(getSyn2CoreCameraDirectoryUseCase(), "frame_timestamps.txt")
+        val timestampsCopy = synchronized(frameTimestamps) { ArrayList(frameTimestamps) }
         frameLogFile.bufferedWriter().use { writer ->
             writer.write("index,timestamp_ms\n")
-            frameTimestamps.forEach {
+            timestampsCopy.forEach {
                 writer.write("${it.first + 1},${it.second}\n")
             }
         }
     }
 
     private fun releaseResources() {
-        mediaRecorder?.release()
-        captureSession?.close()
-        cameraDevice?.close()
+        try {
+            captureSession?.stopRepeating()
+        } catch (e: CameraAccessException) {
+            Timber.e(e, "Failed to stop repeating: ${e.message}")
+        }
+        try {
+            captureSession?.close()
+        } catch (e: CameraAccessException) {
+            Timber.e(e, "Failed to close capture session: ${e.message}")
+        }
+        try {
+            cameraDevice?.close()
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to close camera device: ${e.message}")
+        }
         cameraHandlerThread.quitSafely()
         mediaRecorder = null
         captureSession = null
