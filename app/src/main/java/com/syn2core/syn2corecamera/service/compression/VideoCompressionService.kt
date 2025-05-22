@@ -8,7 +8,7 @@ import timber.log.Timber
 import java.io.File
 import javax.inject.Inject
 
-class VideoCompressionUseCase @Inject constructor(
+class VideoCompressionService @Inject constructor(
     private val getSyn2CoreCameraDirectoryUseCase: GetSyn2CoreCameraDirectoryUseCase
 ) {
     operator fun invoke(inputVideoName: String, outputVideoName: String) {

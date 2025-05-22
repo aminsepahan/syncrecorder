@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -48,6 +50,8 @@ class RecordingViewModel @Inject constructor(
     private var autoRestartJob: Job? = null
 
     private var recordingVideoName: String = ""
+
+    private val segmentMutex = Mutex()
 
     fun updateSurface(surface: Surface) {
         cameraSurface = surface
@@ -123,30 +127,32 @@ class RecordingViewModel @Inject constructor(
 
     private fun stopAll() {
         viewModelScope.launch(Dispatchers.IO) {
-            autoRestartJob?.cancel()
-            autoRestartJob = null
-            durationMillisService.stop()
+            segmentMutex.withLock {
+                autoRestartJob?.cancel()
+                autoRestartJob = null
+                durationMillisService.stop()
 
-            updateState { it.copy(isSaving = true) }
+                updateState { it.copy(isSaving = true) }
 
-            val currentCount = _state.value.recordingCount
-            val stoppedFile = cameraService.stopAndGetCurrentVideoFile()
-            sensorService.stopSensors(currentCount)
+                val currentCount = _state.value.recordingCount
+                val stoppedFile = cameraService.stopAndGetCurrentVideoFile()
+                sensorService.stopSensors(currentCount)
 
-            updateState { it.copy(isRecording = false, recordingCount = it.recordingCount + 1) }
-            effect.postValue(RecordingViewEffect.RecordingStopped)
+                updateState { it.copy(isRecording = false, recordingCount = it.recordingCount + 1) }
+                effect.postValue(RecordingViewEffect.RecordingStopped)
 
-            stoppedFile?.let { file ->
-                val originalName = file.name
-                val embeddedName = originalName.replace("s2c_", "s2c_embedded_")
-                saveService.addTask(
-                    SaveTask(
-                        videoName = originalName,
-                        outputName = embeddedName,
-                        recordingCount = currentCount
-                    ),
-                    onDone = { updateState { it.copy(isSaving = false) } }
-                )
+                stoppedFile?.let { file ->
+                    val originalName = file.name
+                    val embeddedName = originalName.replace("s2c_", "s2c_embedded_")
+                    saveService.addTask(
+                        SaveTask(
+                            videoName = originalName,
+                            outputName = embeddedName,
+                            recordingCount = currentCount
+                        ),
+                        onDone = { updateState { it.copy(isSaving = false) } }
+                    )
+                }
             }
         }
     }
@@ -155,28 +161,29 @@ class RecordingViewModel @Inject constructor(
         autoRestartJob?.cancel()
         autoRestartJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
-                delay(30 * 60 * 1000L)
+                delay(30 * 1000L)
+                segmentMutex.withLock {
+                    val count = _state.value.recordingCount
+                    val originalName = recordingVideoName
 
-                val count = _state.value.recordingCount
-                val originalName = recordingVideoName
+                    recordingVideoName = cameraService.switchToNewSegment(
+                        surface = surface,
+                        recordingCount = count,
+                        finalizeVideo = {}
+                    )
 
-                recordingVideoName = cameraService.switchToNewSegment(
-                    surface = surface,
-                    recordingCount = count,
-                    finalizeVideo = {}
-                )
+                    val embeddedName = originalName.replace("s2c_", "s2c_embedded_")
+                    saveService.addTask(
+                        SaveTask(
+                            videoName = originalName,
+                            outputName = embeddedName,
+                            recordingCount = count
+                        ),
+                        onDone = { updateState { it.copy(isSaving = false) } }
+                    )
 
-                val embeddedName = originalName.replace("s2c_", "s2c_embedded_")
-                saveService.addTask(
-                    SaveTask(
-                        videoName = originalName,
-                        outputName = embeddedName,
-                        recordingCount = count
-                    ),
-                    onDone = { updateState { it.copy(isSaving = false) } }
-                )
-
-                updateState { it.copy(recordingCount = it.recordingCount + 1) }
+                    updateState { it.copy(recordingCount = it.recordingCount + 1) }
+                }
             }
         }
     }

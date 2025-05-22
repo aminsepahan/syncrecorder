@@ -47,13 +47,8 @@ class CameraService @Inject constructor(
         return startNewSegment(surface, recordingCount, recordingSettings, finalizeVideo)
     }
 
-    suspend fun stopRecordingAndWait() {
-        camera2Recorder.stopRecording()
-        finalizeDeferred?.await()
-    }
-
     fun stopAndGetCurrentVideoFile(): File? {
-        return camera2Recorder.stopRecordingFast()
+        return camera2Recorder.stopRecording()
     }
 
     private suspend fun startNewSegment(
@@ -95,7 +90,7 @@ class CameraService @Inject constructor(
         recordingCount: Int,
         finalizeVideo: () -> Unit
     ): String {
-        val stoppedFile = camera2Recorder.stopRecordingFast()
+        val stoppedFile = camera2Recorder.stopRecording()
         val fileName = stoppedFile?.name
         val recordingSettings = recordingSettings!!
 
