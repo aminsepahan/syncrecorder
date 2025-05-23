@@ -11,6 +11,8 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.view.Surface
 import com.syn2core.syn2corecamera.TAG
+import com.syn2core.syn2corecamera.business.usecase.convert.ConvertFrameTimestampToSrtUseCase
+import com.syn2core.syn2corecamera.business.usecase.directory.GetSyn2CoreCameraDirectoryUseCase
 import com.syn2core.syn2corecamera.domain.RecordingSettings
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +29,8 @@ import kotlin.coroutines.resumeWithException
 @Singleton
 class Camera2Recorder @Inject constructor(
     private val cameraManager: CameraManager,
+    private val getSyn2CoreCameraDirectoryUseCase: GetSyn2CoreCameraDirectoryUseCase,
+    private val convertFrameTimestampToSrtUseCase: ConvertFrameTimestampToSrtUseCase,
 ) {
     private var cameraDevice: CameraDevice? = null
     private var mediaRecorder: MediaRecorder? = null
@@ -39,6 +43,8 @@ class Camera2Recorder @Inject constructor(
 
     private val cameraHandlerThread = HandlerThread("CameraBackground").apply { start() }
     private val cameraHandler = Handler(cameraHandlerThread.looper)
+
+    private val frameTimestamps = mutableListOf<Pair<Long, Long>>()
 
     private val cameraId: String by lazy {
         cameraManager.cameraIdList.first {
@@ -96,6 +102,8 @@ class Camera2Recorder @Inject constructor(
         settings: RecordingSettings,
         onStartSensor: () -> Unit,
     ) {
+        frameTimestamps.clear()
+
         setupMediaRecorder(outputFile, settings)
 
         this.outputFile = outputFile
@@ -132,6 +140,7 @@ class Camera2Recorder @Inject constructor(
                     timestamp: Long,
                     frameNumber: Long
                 ) {
+                    frameTimestamps.add(Pair(frameNumber, timestamp))
                     if (!didSendStart) {
                         onStartSensor()
                         didSendStart = true
@@ -146,6 +155,13 @@ class Camera2Recorder @Inject constructor(
         return try {
             mediaRecorder?.apply {
                 stop()
+
+                saveFrameTimestamps()
+                convertFrameTimestampToSrtUseCase(
+                    inputTxtName = "frame_timestamps.txt",
+                    outputSrtName = "frame_data.srt"
+                )
+
                 reset()
                 finalizeCallback?.invoke()
                 finalizeDeferred?.complete(Unit)
@@ -153,6 +169,7 @@ class Camera2Recorder @Inject constructor(
             outputFile
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Failed to stop MediaRecorder")
+            synchronized(frameTimestamps) { frameTimestamps.clear() }
             finalizeDeferred?.completeExceptionally(e)
             null
         }
@@ -205,4 +222,15 @@ class Camera2Recorder @Inject constructor(
                 cameraHandler
             )
         }
+
+    private fun saveFrameTimestamps() {
+        val file = File(getSyn2CoreCameraDirectoryUseCase(), "frame_timestamps.txt")
+        val list = synchronized(frameTimestamps) { ArrayList(frameTimestamps) }
+        file.bufferedWriter().use {
+            it.write("index,timestamp_ms\n")
+            list.forEach { (frame, timestamp) ->
+                it.write("${frame + 1},${timestamp}\n")
+            }
+        }
+    }
 }
