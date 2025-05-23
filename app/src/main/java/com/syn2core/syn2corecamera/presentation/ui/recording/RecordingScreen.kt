@@ -50,6 +50,7 @@ import androidx.lifecycle.asFlow
 import com.syn2core.syn2corecamera.extension.Helper
 import com.syn2core.syn2corecamera.navigation.Router
 import com.syn2core.syn2corecamera.presentation.components.CameraView
+import com.syn2core.syn2corecamera.presentation.components.KeepScreenOn
 import com.syn2core.syn2corecamera.presentation.components.SavingOverlay
 
 @Composable
@@ -57,6 +58,8 @@ fun RecordingScreen(
     router: Router? = null,
     viewModel: RecordingViewModel = hiltViewModel()
 ) {
+    KeepScreenOn()
+
     val viewState by viewModel.state.collectAsState()
     val viewEffect by viewModel.effect.asFlow().collectAsState(RecordingViewEffect.DoNothing)
     val (focusRequesterRecord, focusRequesterSettings, focusRequesterChart) = remember { FocusRequester.createRefs() }
