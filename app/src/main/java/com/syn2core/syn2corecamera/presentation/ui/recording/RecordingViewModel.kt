@@ -4,13 +4,10 @@ import android.view.Surface
 import androidx.lifecycle.viewModelScope
 import com.syn2core.common.ui.base.BaseViewModel
 import com.syn2core.common.ui.livedata.SingleLiveData
+import com.syn2core.syn2corecamera.TAG
 import com.syn2core.syn2corecamera.business.usecase.setting.GetRecordingSettingsUseCase
-import com.syn2core.syn2corecamera.domain.RecordingSettings
-import com.syn2core.syn2corecamera.domain.SaveTask
 import com.syn2core.syn2corecamera.service.camera.CameraService
 import com.syn2core.syn2corecamera.service.durationmillis.DurationMillisService
-import com.syn2core.syn2corecamera.service.save.SaveService
-import com.syn2core.syn2corecamera.service.sensor.SensorService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -36,9 +33,7 @@ import javax.inject.Inject
 class RecordingViewModel @Inject constructor(
     private val getRecordingSettingsUseCase: GetRecordingSettingsUseCase,
     private val durationMillisService: DurationMillisService,
-    private val sensorService: SensorService,
     private val cameraService: CameraService,
-    private val saveService: SaveService,
 ) : BaseViewModel<RecordingViewEvent>() {
 
     private val _state = MutableStateFlow(RecordingViewState())
@@ -91,7 +86,7 @@ class RecordingViewModel @Inject constructor(
         viewModelScope.launch {
             val surface = cameraSurface
             if (surface == null) {
-                Timber.w("🚫 Cannot start recording: Surface is null")
+                Timber.tag(TAG).w("🚫 Cannot start recording: Surface is null")
                 return@launch
             }
 
@@ -99,7 +94,6 @@ class RecordingViewModel @Inject constructor(
 
             val videoFileName = cameraService.startRecordingAndSensors(
                 surface = surface,
-                recordingCount = _state.value.recordingCount,
                 recordingSettings = settings,
                 finalizeVideo = {}
             )
@@ -109,15 +103,13 @@ class RecordingViewModel @Inject constructor(
                 updateState { it.copy(durationMillis = newDuration) }
             }
 
-            saveService.startService(viewModelScope)
-
             viewModelScope.launch {
-                saveService.queueSize.collectLatest { size ->
+                cameraService.pendingSaveTasks.collectLatest { size ->
                     updateState { it.copy(pendingSaveTasks = size) }
                 }
             }
 
-            startAutoRestartLoop(surface, settings)
+            startAutoRestartLoop(surface)
 
             updateState { it.copy(isRecording = true, durationMillis = 0L) }
             effect.postValue(RecordingViewEffect.RecordingStarted)
@@ -133,58 +125,30 @@ class RecordingViewModel @Inject constructor(
 
                 updateState { it.copy(isSaving = true) }
 
-                val currentCount = _state.value.recordingCount
-                val stoppedFile = cameraService.stopAndGetCurrentVideoFile()
+                val success = cameraService.stopRecordingAndSensors()
 
-                cameraService.camera2Recorder.finalizeDeferred?.await()
-
-                sensorService.stopSensors(currentCount)
-
-                updateState { it.copy(isRecording = false, recordingCount = it.recordingCount + 1) }
-                effect.postValue(RecordingViewEffect.RecordingStopped)
-
-                stoppedFile?.let { file ->
-                    val originalName = file.name
-                    val embeddedName = originalName.replace("s2c_", "s2c_embedded_")
-                    saveService.addTask(
-                        SaveTask(
-                            videoName = originalName,
-                            outputName = embeddedName,
-                            recordingCount = currentCount
-                        ),
-                        onDone = { updateState { it.copy(isSaving = false) } }
+                updateState {
+                    it.copy(
+                        isRecording = false,
+                        isSaving = success
                     )
                 }
+
+                effect.postValue(RecordingViewEffect.RecordingStopped)
             }
         }
     }
 
-    private fun startAutoRestartLoop(surface: Surface, settings: RecordingSettings) {
+    private fun startAutoRestartLoop(surface: Surface) {
         autoRestartJob?.cancel()
         autoRestartJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
-                delay(30 * 1000L)
+                delay(10 * 1000L)
                 segmentMutex.withLock {
-                    val count = _state.value.recordingCount
-                    val originalName = recordingVideoName
-
                     recordingVideoName = cameraService.switchToNewSegment(
                         surface = surface,
-                        recordingCount = count,
                         finalizeVideo = {}
                     )
-
-                    val embeddedName = originalName.replace("s2c_", "s2c_embedded_")
-                    saveService.addTask(
-                        SaveTask(
-                            videoName = originalName,
-                            outputName = embeddedName,
-                            recordingCount = count
-                        ),
-                        onDone = { updateState { it.copy(isSaving = false) } }
-                    )
-
-                    updateState { it.copy(recordingCount = it.recordingCount + 1) }
                 }
             }
         }

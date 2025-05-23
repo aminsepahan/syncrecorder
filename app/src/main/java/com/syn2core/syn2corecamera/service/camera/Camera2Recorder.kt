@@ -10,8 +10,7 @@ import android.media.MediaRecorder
 import android.os.Handler
 import android.os.HandlerThread
 import android.view.Surface
-import com.syn2core.syn2corecamera.business.usecase.convert.ConvertFrameTimestampToSrtUseCase
-import com.syn2core.syn2corecamera.business.usecase.directory.GetSyn2CoreCameraDirectoryUseCase
+import com.syn2core.syn2corecamera.TAG
 import com.syn2core.syn2corecamera.domain.RecordingSettings
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -28,8 +27,6 @@ import kotlin.coroutines.resumeWithException
 @Singleton
 class Camera2Recorder @Inject constructor(
     private val cameraManager: CameraManager,
-    private val getSyn2CoreCameraDirectoryUseCase: GetSyn2CoreCameraDirectoryUseCase,
-    private val convertFrameTimestampToSrtUseCase: ConvertFrameTimestampToSrtUseCase,
 ) {
     private var cameraDevice: CameraDevice? = null
     private var mediaRecorder: MediaRecorder? = null
@@ -39,8 +36,6 @@ class Camera2Recorder @Inject constructor(
     private var previewSurface: Surface? = null
     var finalizeDeferred: CompletableDeferred<Unit>? = null
         private set
-
-    private val frameTimestamps = mutableListOf<Pair<Long, Long>>()
 
     private val cameraHandlerThread = HandlerThread("CameraBackground").apply { start() }
     private val cameraHandler = Handler(cameraHandlerThread.looper)
@@ -80,9 +75,10 @@ class Camera2Recorder @Inject constructor(
             object : CameraCaptureSession.StateCallback() {
                 override fun onConfigured(session: CameraCaptureSession) {
                     captureSession = session
-                    val request = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
-                        addTarget(surface)
-                    }
+                    val request =
+                        cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
+                            addTarget(surface)
+                        }
                     session.setRepeatingRequest(request.build(), null, cameraHandler)
                 }
 
@@ -101,8 +97,8 @@ class Camera2Recorder @Inject constructor(
         onStartTimestamp: () -> Unit,
         onFinalize: () -> Unit
     ) {
-        frameTimestamps.clear()
         setupMediaRecorder(outputFile, settings)
+
         this.outputFile = outputFile
         this.finalizeCallback = onFinalize
         finalizeDeferred = CompletableDeferred()
@@ -120,7 +116,10 @@ class Camera2Recorder @Inject constructor(
                 set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
             }
             if (settings.stabilization) {
-                set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE, CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF)
+                set(
+                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                )
             }
         }
 
@@ -129,8 +128,12 @@ class Camera2Recorder @Inject constructor(
         captureSession?.setRepeatingRequest(
             request.build(),
             object : CameraCaptureSession.CaptureCallback() {
-                override fun onCaptureStarted(session: CameraCaptureSession, request: CaptureRequest, timestamp: Long, frameNumber: Long) {
-                    frameTimestamps.add(Pair(frameNumber, timestamp))
+                override fun onCaptureStarted(
+                    session: CameraCaptureSession,
+                    request: CaptureRequest,
+                    timestamp: Long,
+                    frameNumber: Long
+                ) {
                     if (!didSendStart) {
                         onStartTimestamp()
                         didSendStart = true
@@ -145,41 +148,36 @@ class Camera2Recorder @Inject constructor(
         return try {
             mediaRecorder?.apply {
                 stop()
-                saveFrameTimestamps()
-                convertFrameTimestampToSrtUseCase(
-                    inputTxtName = "frame_timestamps.txt",
-                    outputSrtName = "frame_data.srt"
-                )
                 reset()
                 finalizeCallback?.invoke()
                 finalizeDeferred?.complete(Unit)
             }
-            synchronized(frameTimestamps) { frameTimestamps.clear() }
             outputFile
         } catch (e: Exception) {
-            Timber.e(e, "Failed to stop MediaRecorder")
+            Timber.tag(TAG).e(e, "Failed to stop MediaRecorder")
             finalizeDeferred?.completeExceptionally(e)
             null
         }
     }
 
-    private suspend fun setupMediaRecorder(file: File, settings: RecordingSettings) = withContext(Dispatchers.IO) {
-        val (width, height) = settings.getResolutionSize()
-        mediaRecorder = MediaRecorder().apply {
-            setAudioSource(settings.getAudioSource())
-            setAudioSamplingRate(96000)
-            setVideoSource(MediaRecorder.VideoSource.SURFACE)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setOutputFile(file.absolutePath)
-            setVideoEncodingBitRate(10000000)
-            setVideoFrameRate(settings.frameRate)
-            setVideoSize(width, height)
-            setVideoEncoder(settings.getCodec())
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            setOrientationHint(0)
-            prepare()
+    private suspend fun setupMediaRecorder(file: File, settings: RecordingSettings) =
+        withContext(Dispatchers.IO) {
+            val (width, height) = settings.getResolutionSize()
+            mediaRecorder = MediaRecorder().apply {
+                setAudioSource(settings.getAudioSource())
+                setAudioSamplingRate(96000)
+                setVideoSource(MediaRecorder.VideoSource.SURFACE)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setOutputFile(file.absolutePath)
+                setVideoEncodingBitRate(10000000)
+                setVideoFrameRate(settings.frameRate)
+                setVideoSize(width, height)
+                setVideoEncoder(settings.getCodec())
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setOrientationHint(0)
+                prepare()
+            }
         }
-    }
 
     private suspend fun openCameraSuspending(): CameraDevice =
         suspendCancellableCoroutine { cont ->
@@ -209,15 +207,4 @@ class Camera2Recorder @Inject constructor(
                 cameraHandler
             )
         }
-
-    private fun saveFrameTimestamps() {
-        val file = File(getSyn2CoreCameraDirectoryUseCase(), "frame_timestamps.txt")
-        val list = synchronized(frameTimestamps) { ArrayList(frameTimestamps) }
-        file.bufferedWriter().use {
-            it.write("index,timestamp_ms\n")
-            list.forEach { (frame, timestamp) ->
-                it.write("${frame + 1},${timestamp}\n")
-            }
-        }
-    }
 }
