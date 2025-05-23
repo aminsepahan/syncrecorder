@@ -33,45 +33,39 @@ class CameraService @Inject constructor(
     suspend fun startRecordingAndSensors(
         surface: Surface,
         recordingSettings: RecordingSettings,
-        finalizeVideo: () -> Unit
     ): String {
         this.recordingSettings = recordingSettings
-        segmentCount = 1
         saveService.startService(CoroutineScope(Dispatchers.IO))
-        return startNewSegment(surface, recordingSettings, finalizeVideo)
+        return startNewSegment(surface, recordingSettings)
     }
 
-    suspend fun stopRecordingAndSensors(): Boolean {
+    suspend fun stopRecordingAndSensors() {
         val stoppedFile = camera2Recorder.stopRecording()
-        sensorService.stopSensors(segmentCount)
+        sensorService.stopSensors()
         camera2Recorder.finalizeDeferred?.await()
 
-        return stoppedFile?.name?.let { originalName ->
+        stoppedFile?.name?.let { originalName ->
             saveService.addTask(SaveTask(videoName = originalName))
-            true
-        } ?: false
+        }
     }
 
     private suspend fun startNewSegment(
         surface: Surface,
         recordingSettings: RecordingSettings,
-        finalizeVideo: () -> Unit
     ): String {
+        segmentCount++
         currentVideoFile = getVideoFileUseCase(segmentCount)
 
         camera2Recorder.startRecording(
             surface = surface,
             outputFile = currentVideoFile!!,
             settings = recordingSettings,
-            onStartTimestamp = {
+            onStartSensor = {
                 sensorService.startSensors(
-                    imuFrequency = recordingSettings.getImuSensorDelay()
+                    imuFrequency = recordingSettings.getImuSensorDelay(),
+                    segmentNumber = segmentCount
                 )
-                segmentCount++
             },
-            onFinalize = {
-                finalizeVideo()
-            }
         )
 
         return currentVideoFile!!.name
@@ -79,11 +73,10 @@ class CameraService @Inject constructor(
 
     suspend fun switchToNewSegment(
         surface: Surface,
-        finalizeVideo: () -> Unit
     ): String {
         val stoppedFile = camera2Recorder.stopRecording()
 
-        sensorService.stopSensors(segmentCount)
+        sensorService.stopSensors()
 
         camera2Recorder.finalizeDeferred?.await()
 
@@ -96,6 +89,6 @@ class CameraService @Inject constructor(
             )
         }
 
-        return startNewSegment(surface, recordingSettings, finalizeVideo)
+        return startNewSegment(surface, recordingSettings)
     }
 }

@@ -95,7 +95,6 @@ class RecordingViewModel @Inject constructor(
             val videoFileName = cameraService.startRecordingAndSensors(
                 surface = surface,
                 recordingSettings = settings,
-                finalizeVideo = {}
             )
             recordingVideoName = videoFileName
 
@@ -125,12 +124,12 @@ class RecordingViewModel @Inject constructor(
 
                 updateState { it.copy(isSaving = true) }
 
-                val success = cameraService.stopRecordingAndSensors()
+                cameraService.stopRecordingAndSensors()
 
                 updateState {
                     it.copy(
                         isRecording = false,
-                        isSaving = success
+                        isSaving = false
                     )
                 }
 
@@ -143,12 +142,9 @@ class RecordingViewModel @Inject constructor(
         autoRestartJob?.cancel()
         autoRestartJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
-                delay(10 * 1000L)
+                delay(30 * 1000L)
                 segmentMutex.withLock {
-                    recordingVideoName = cameraService.switchToNewSegment(
-                        surface = surface,
-                        finalizeVideo = {}
-                    )
+                    recordingVideoName = cameraService.switchToNewSegment(surface = surface)
                 }
             }
         }

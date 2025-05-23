@@ -7,13 +7,17 @@ class SensorService @Inject constructor(
     private val unifiedSensorService: UnifiedSensorService,
     private val aggregator: SensorDataAggregator,
 ) {
+    private var segmentCount = 0
+
     fun startSensors(
-        imuFrequency: Int
+        imuFrequency: Int,
+        segmentNumber: Int
     ) {
         unifiedSensorService.startSensors(imuFrequency)
+        segmentCount = segmentNumber
     }
 
-    suspend fun stopSensors(segmentCount: Int) = coroutineScope {
+    suspend fun stopSensors() = coroutineScope {
         unifiedSensorService.stopSensors()
         aggregator.saveToJsonFile(segmentCount)
     }

@@ -94,13 +94,11 @@ class Camera2Recorder @Inject constructor(
         surface: Surface,
         outputFile: File,
         settings: RecordingSettings,
-        onStartTimestamp: () -> Unit,
-        onFinalize: () -> Unit
+        onStartSensor: () -> Unit,
     ) {
         setupMediaRecorder(outputFile, settings)
 
         this.outputFile = outputFile
-        this.finalizeCallback = onFinalize
         finalizeDeferred = CompletableDeferred()
 
         val recorderSurface = mediaRecorder!!.surface
@@ -135,7 +133,7 @@ class Camera2Recorder @Inject constructor(
                     frameNumber: Long
                 ) {
                     if (!didSendStart) {
-                        onStartTimestamp()
+                        onStartSensor()
                         didSendStart = true
                     }
                 }
