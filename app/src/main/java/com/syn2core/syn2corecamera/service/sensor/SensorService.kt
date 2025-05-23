@@ -13,8 +13,8 @@ class SensorService @Inject constructor(
         unifiedSensorService.startSensors(imuFrequency)
     }
 
-    suspend fun stopSensors(recordingCount: Int) = coroutineScope {
+    suspend fun stopSensors(segmentCount: Int) = coroutineScope {
         unifiedSensorService.stopSensors()
-        aggregator.saveToJsonFile(recordingCount)
+        aggregator.saveToJsonFile(segmentCount)
     }
 }

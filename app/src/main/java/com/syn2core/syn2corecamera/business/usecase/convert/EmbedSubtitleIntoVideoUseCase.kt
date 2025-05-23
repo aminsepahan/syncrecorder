@@ -22,10 +22,11 @@ class EmbedSubtitleIntoVideoUseCase @Inject constructor(
     suspend operator fun invoke(
         videoNameFile: String,
         subtitleNameFile: String,
-        outputNameFile: String,
     ) = withContext(Dispatchers.IO) {
         val videoFile = File(getSyn2CoreCameraDirectoryUseCase(), videoNameFile)
         val subtitleFile = File(getSyn2CoreCameraDirectoryUseCase(), subtitleNameFile)
+
+        val outputNameFile = videoNameFile.replace("s2c_", "s2c_embedded_")
         val outputFile = File(getSyn2CoreCameraDirectoryUseCase(), outputNameFile)
 
         if (!subtitleFile.exists()) {
