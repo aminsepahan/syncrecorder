@@ -6,6 +6,7 @@ import com.syn2core.common.ui.base.BaseViewModel
 import com.syn2core.common.ui.livedata.SingleLiveData
 import com.syn2core.syn2corecamera.TAG
 import com.syn2core.syn2corecamera.business.usecase.setting.GetRecordingSettingsUseCase
+import com.syn2core.syn2corecamera.domain.RecordingSettings
 import com.syn2core.syn2corecamera.service.camera.CameraService
 import com.syn2core.syn2corecamera.service.durationmillis.DurationMillisService
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -108,7 +109,7 @@ class RecordingViewModel @Inject constructor(
                 }
             }
 
-            startAutoRestartLoop(surface)
+            startAutoRestartLoop(surface, settings)
 
             updateState { it.copy(isRecording = true, durationMillis = 0L) }
             effect.postValue(RecordingViewEffect.RecordingStarted)
@@ -138,11 +139,11 @@ class RecordingViewModel @Inject constructor(
         }
     }
 
-    private fun startAutoRestartLoop(surface: Surface) {
+    private fun startAutoRestartLoop(surface: Surface, settings: RecordingSettings) {
         autoRestartJob?.cancel()
         autoRestartJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
-                delay(30 * 1000L)
+                delay(settings.autoStopMinutes * 60 * 1000L)
                 segmentMutex.withLock {
                     recordingVideoName = cameraService.switchToNewSegment(surface = surface)
                 }
