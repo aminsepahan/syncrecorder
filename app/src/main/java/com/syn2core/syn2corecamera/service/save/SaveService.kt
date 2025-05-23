@@ -1,7 +1,6 @@
 package com.syn2core.syn2corecamera.service.save
 
 import com.syn2core.syn2corecamera.TAG
-import com.syn2core.syn2corecamera.business.usecase.convert.EmbedSubtitleIntoVideoUseCase
 import com.syn2core.syn2corecamera.domain.SaveTask
 import com.syn2core.syn2corecamera.service.compression.VideoCompressionService
 import kotlinx.coroutines.CoroutineScope
@@ -17,7 +16,7 @@ import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SaveService @Inject constructor(
-    private val embedSubtitleIntoVideoUseCase: EmbedSubtitleIntoVideoUseCase,
+    //private val embedSubtitleIntoVideoUseCase: EmbedSubtitleIntoVideoUseCase,
     private val videoCompressionService: VideoCompressionService,
 ) {
     private val queue = Channel<Pair<SaveTask, () -> Unit>>(Channel.UNLIMITED)
@@ -36,12 +35,11 @@ class SaveService @Inject constructor(
             for ((task, onDone) in queue) {
                 try {
                     _queueSize.value = queueSize.value - 1
-                    val subtitleFile = "sensor_data_${task.recordingCount}.srt"
-                    embedSubtitleIntoVideoUseCase(
+                    //val subtitleFile = "sensor_data.srt"
+                    /*embedSubtitleIntoVideoUseCase(
                         task.videoName,
                         subtitleFile,
-                        task.outputName
-                    )
+                    )*/
                     onDone()
                 } catch (e: Exception) {
                     Timber.tag(TAG).e(e, "Failed to save task for ${task.videoName}")
