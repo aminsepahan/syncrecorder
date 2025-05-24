@@ -11,7 +11,6 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.view.Surface
 import com.syn2core.syn2corecamera.TAG
-import com.syn2core.syn2corecamera.business.usecase.convert.ConvertFrameTimestampToSrtUseCase
 import com.syn2core.syn2corecamera.business.usecase.directory.GetSyn2CoreCameraDirectoryUseCase
 import com.syn2core.syn2corecamera.domain.RecordingSettings
 import kotlinx.coroutines.CompletableDeferred
@@ -30,7 +29,6 @@ import kotlin.coroutines.resumeWithException
 class Camera2Recorder @Inject constructor(
     private val cameraManager: CameraManager,
     private val getSyn2CoreCameraDirectoryUseCase: GetSyn2CoreCameraDirectoryUseCase,
-    private val convertFrameTimestampToSrtUseCase: ConvertFrameTimestampToSrtUseCase,
 ) {
     private var cameraDevice: CameraDevice? = null
     private var mediaRecorder: MediaRecorder? = null
@@ -157,11 +155,6 @@ class Camera2Recorder @Inject constructor(
                 stop()
 
                 saveFrameTimestamps()
-                convertFrameTimestampToSrtUseCase(
-                    inputTxtName = "frame_timestamps.txt",
-                    outputSrtName = "frame_data.srt"
-                )
-
                 reset()
                 finalizeCallback?.invoke()
                 finalizeDeferred?.complete(Unit)
@@ -189,23 +182,26 @@ class Camera2Recorder @Inject constructor(
                 setVideoSize(width, height)
                 setVideoEncoder(settings.getCodec())
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                setOrientationHint(0)
+                setOrientationHint(180)
                 prepare()
             }
         }
 
+    @SuppressLint("MissingPermission")
     private suspend fun openCameraSuspending(): CameraDevice =
-        suspendCancellableCoroutine { cont ->
+        suspendCancellableCoroutine { continuation ->
             cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
-                override fun onOpened(camera: CameraDevice) = cont.resume(camera)
+                override fun onOpened(camera: CameraDevice) = continuation.resume(camera)
                 override fun onDisconnected(camera: CameraDevice) {
                     camera.close()
-                    cont.cancel()
+                    continuation.cancel()
                 }
 
                 override fun onError(camera: CameraDevice, error: Int) {
+                    if (continuation.isActive) {
+                        continuation.resumeWithException(RuntimeException("Camera error: $error"))
+                    }
                     camera.close()
-                    cont.resumeWithException(RuntimeException("Camera error: $error"))
                 }
             }, cameraHandler)
         }

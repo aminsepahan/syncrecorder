@@ -19,6 +19,6 @@ class SensorService @Inject constructor(
 
     suspend fun stopSensors() = coroutineScope {
         unifiedSensorService.stopSensors()
-        aggregator.saveToJsonFile(segmentCount)
+        aggregator.saveToJsonFile()
     }
 }
