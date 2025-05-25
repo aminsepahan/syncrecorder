@@ -14,6 +14,9 @@ class SensorService @Inject constructor(
         segmentNumber: Int,
         currentVideoFile: File
     ) {
+        if (segmentNumber == 1) {
+            aggregator.startNewFile(currentVideoFile)
+        }
         unifiedSensorService.startSensors(
             imuFrequency = imuFrequency,
             segmentNumber = segmentNumber,

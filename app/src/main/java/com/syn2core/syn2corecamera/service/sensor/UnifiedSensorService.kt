@@ -39,9 +39,6 @@ class UnifiedSensorService @Inject constructor(
         startSensor(Sensor.TYPE_ACCELEROMETER, "accelerometer", imuFrequency)
         startSensor(Sensor.TYPE_GYROSCOPE, "gyroscope", imuFrequency)
         startSensor(Sensor.TYPE_MAGNETIC_FIELD, "magnetometer", imuFrequency)
-        if (segmentNumber == 1) {
-            aggregator.startNewFile(currentVideoFile)
-        }
     }
 
     private fun startSensor(type: Int, name: String, delay: Int) {
