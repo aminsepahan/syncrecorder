@@ -13,6 +13,7 @@ val TealSecondaryDark = Color(0xFF00BFA5)
 // Backgrounds
 val LightBackground = Color(0xFFFFFFFF)
 val DarkBackground = Color(0xFF121212)
+val DarkGray = Color(0xFF5D5D5D)
 
 // On Background
 val LightOnBackground = Color(0xFF212121)

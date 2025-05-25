@@ -16,8 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AreaChart
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Stop
@@ -42,6 +43,7 @@ import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -52,6 +54,9 @@ import com.syn2core.syn2corecamera.navigation.Router
 import com.syn2core.syn2corecamera.presentation.components.CameraView
 import com.syn2core.syn2corecamera.presentation.components.KeepScreenOn
 import com.syn2core.syn2corecamera.presentation.components.SavingOverlay
+import com.syn2core.syn2corecamera.presentation.theme.DarkBackground
+import com.syn2core.syn2corecamera.presentation.theme.DarkGray
+import com.syn2core.syn2corecamera.presentation.theme.ErrorLight
 
 @Composable
 fun RecordingScreen(
@@ -118,6 +123,10 @@ fun RecordingLayout(
     val context = LocalContext.current
     val focusedItem = remember { mutableStateOf(Item.Record) }
 
+    LaunchedEffect(Unit) {
+        focusRequesterRecord.requestFocus()
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         val resolution = viewState.settingsState.getResolutionSize()
 
@@ -138,6 +147,21 @@ fun RecordingLayout(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 20.dp)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            if (viewState.isRecording) {
+                                ErrorLight
+                            } else {
+                                DarkBackground
+                            },
+                            DarkGray
+                        )
+                    ),
+                    alpha = 0.6f,
+                    shape = RoundedCornerShape(corner = CornerSize(5.dp))
+                )
+                .padding(5.dp)
         )
 
         Row(
@@ -151,8 +175,9 @@ fun RecordingLayout(
                         onEventHandler(RecordingViewEvent.NavigateToSettings)
                     },
                     modifier = Modifier
+                        .size(60.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
+                        .background(DarkGray)
                         .focusRequester(focusRequesterSettings)
                         .focusProperties {
                             next = focusRequesterChart
@@ -160,7 +185,7 @@ fun RecordingLayout(
                         }
                         .onFocusChanged { focusedItem.value = Item.Setting }
                         .border(
-                            width = if (focusedItem.value == Item.Setting) 8.dp else 0.dp,
+                            width = if (focusedItem.value == Item.Setting) 8.dp else 2.dp,
                             color = White,
                             shape = CircleShape,
                         )
@@ -186,10 +211,9 @@ fun RecordingLayout(
                     }
                 },
                 modifier = Modifier
+                    .size(60.dp)
                     .clip(CircleShape)
-                    .background(
-                        if (viewState.isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                    )
+                    .background(ErrorLight)
                     .focusRequester(focusRequesterRecord)
                     .focusProperties {
                         next = focusRequesterSettings
@@ -197,7 +221,7 @@ fun RecordingLayout(
                     }
                     .onFocusChanged { focusedItem.value = Item.Record }
                     .border(
-                        width = if (focusedItem.value == Item.Record) 8.dp else 0.dp,
+                        width = if (focusedItem.value == Item.Record) 8.dp else 2.dp,
                         color = White,
                         shape = CircleShape,
                     )

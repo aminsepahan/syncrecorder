@@ -22,7 +22,7 @@ class JsonFileWriter() {
     }
 
     fun appendJsonObject(jsonObject: SensorSnapshot) {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.Default).launch {
             file.appendText("${gson.toJson(jsonObject)},\n")
         }
     }

@@ -108,7 +108,7 @@ class RecordingViewModel @Inject constructor(
     }
 
     private fun stopAll() {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(Dispatchers.IO) {
             autoRestartJob?.cancel()
             autoRestartJob = null
             durationMillisService.stop()
