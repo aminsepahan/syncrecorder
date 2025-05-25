@@ -114,7 +114,6 @@ class RecordingViewModel @Inject constructor(
             updateState {
                 it.copy(
                     isRecording = false,
-                    isSaving = false,
                     durationMillis = 0
                 )
             }
