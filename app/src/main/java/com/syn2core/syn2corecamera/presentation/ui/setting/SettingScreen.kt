@@ -6,16 +6,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,7 +28,6 @@ import androidx.lifecycle.asFlow
 import com.syn2core.syn2corecamera.domain.RecordingSettings
 import com.syn2core.syn2corecamera.navigation.Router
 import com.syn2core.syn2corecamera.navigation.Screen
-import com.syn2core.syn2corecamera.presentation.components.AutoStopInput
 import com.syn2core.syn2corecamera.presentation.components.DropdownSelector
 
 @Composable
@@ -45,7 +39,7 @@ fun SettingScreen(
     val viewEffect by viewModel.effect.asFlow().collectAsState(SettingViewEffect.DoNothing)
 
     LaunchedEffect(viewEffect) {
-        when (val effect = viewEffect) {
+        when (viewEffect) {
             SettingViewEffect.DoNothing -> {}
             SettingViewEffect.GoBackRecordingPage -> {
                 router?.goBack(Screen.Recording.route)
@@ -83,25 +77,12 @@ fun SettingLayout(
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Settings") },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        onEventHandler(SettingViewEvent.GoBackToRecordingPage)
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
+    Scaffold { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .padding(start = 40.dp, end = 40.dp)
+                .padding(start = 25.dp, end = 25.dp, top = 25.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -109,80 +90,116 @@ fun SettingLayout(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     DropdownSelector(
-                        "Resolution",
-                        listOf("480p", "720p", "1080p", "4K"),
-                        resolution
+                        label = "Resolution",
+                        options = listOf("480p", "720p", "1080p", "4K"),
+                        selectedOption = resolution
                     ) {
                         resolution = it
                     }
 
-                    DropdownSelector("Frame Rate", listOf(24, 30, 60), frameRate) {
+                    DropdownSelector(
+                        label = "Frame Rate",
+                        options = listOf(24, 30, 60),
+                        selectedOption = frameRate
+                    ) {
                         frameRate = it
                     }
 
-                    DropdownSelector("Video Codec", listOf("H.264", "HEVC"), codec) {
+                    DropdownSelector(
+                        label = "Video Codec",
+                        options = listOf("H.264", "HEVC"),
+                        selectedOption = codec
+                    ) {
                         codec = it
                     }
                 }
 
                 Column(modifier = Modifier.weight(1f)) {
                     DropdownSelector(
-                        "Audio Source",
-                        listOf("MIC", "CAMCORDER", "VOICE_RECOGNITION"),
-                        audioSource
+                        label = "Audio Source",
+                        options = listOf("MIC", "CAMCORDER", "VOICE_RECOGNITION"),
+                        selectedOption = audioSource
                     ) {
                         audioSource = it
                     }
 
-                    DropdownSelector("IMU Frequency", listOf(10, 50, 100), imuFrequency) {
+                    DropdownSelector(
+                        label = "IMU Frequency",
+                        options = listOf(10, 50, 100),
+                        selectedOption = imuFrequency
+                    ) {
                         imuFrequency = it
                     }
                 }
 
                 Column(modifier = Modifier.weight(1f)) {
-                    AutoStopInput(
-                        value = autoStopMinutes,
-                        onValueChange = { autoStopMinutes = it }
-                    )
+                    DropdownSelector(
+                        label = "IMU Frequency",
+                        options = listOf(2, 5, 10, 15, 20, 30),
+                        selectedOption = autoStopMinutes
+                    ) {
+                        autoStopMinutes = it
+                    }
                     Column(
                         Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.Top
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(checked = autoFocus, onCheckedChange = { autoFocus = it })
-                            Text("Auto Focus", fontSize = 16.sp)
+                            Checkbox(
+                                checked = autoFocus,
+                                onCheckedChange = { autoFocus = it }
+                            )
+                            Text(
+                                text = "Auto Focus",
+                                fontSize = 16.sp
+                            )
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Checkbox(
                                 checked = stabilization,
                                 onCheckedChange = { stabilization = it })
-                            Text("Stabilization", fontSize = 16.sp)
+                            Text(
+                                text = "Stabilization",
+                                fontSize = 16.sp
+                            )
                         }
                     }
                 }
             }
 
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    onEventHandler(
-                        SettingViewEvent.Save(
-                            RecordingSettings(
-                                resolution = resolution,
-                                frameRate = frameRate,
-                                codec = codec,
-                                autoFocus = autoFocus,
-                                stabilization = stabilization,
-                                audioSource = audioSource,
-                                imuFrequency = imuFrequency,
-                                autoStopMinutes = autoStopMinutes
+            Row {
+                Button(
+                    modifier = Modifier.weight(1f).padding(end = 16.dp),
+                    onClick = {
+                        onEventHandler(SettingViewEvent.GoBackToRecordingPage)
+                    }
+                ) {
+                    Text("back")
+                }
+
+                Button(
+                    modifier = Modifier.weight(4f),
+                    onClick = {
+                        onEventHandler(
+                            SettingViewEvent.Save(
+                                RecordingSettings(
+                                    resolution = resolution,
+                                    frameRate = frameRate,
+                                    codec = codec,
+                                    autoFocus = autoFocus,
+                                    stabilization = stabilization,
+                                    audioSource = audioSource,
+                                    imuFrequency = imuFrequency,
+                                    autoStopMinutes = autoStopMinutes
+                                )
                             )
                         )
-                    )
+                    }
+                ) {
+                    Text("Save")
                 }
-            ) {
-                Text("Save")
             }
+
         }
     }
 }

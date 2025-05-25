@@ -35,7 +35,6 @@ class CameraService @Inject constructor(
     suspend fun stopRecordingAndSensors() {
         camera2Recorder.stopRecording()
         sensorService.stopSensors()
-//        camera2Recorder.finalizeDeferred?.await()
     }
 
     private suspend fun startNewSegment(
@@ -66,10 +65,6 @@ class CameraService @Inject constructor(
         surface: Surface,
     ): String {
         camera2Recorder.stopRecording()
-//        camera2Recorder.finalizeDeferred?.await()
-
-        val recordingSettings = recordingSettings!!
-
-        return startNewSegment(surface, recordingSettings)
+        return startNewSegment(surface, recordingSettings!!)
     }
 }
