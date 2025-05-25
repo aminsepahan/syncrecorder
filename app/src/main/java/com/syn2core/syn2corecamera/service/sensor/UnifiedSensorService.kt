@@ -4,7 +4,9 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
@@ -37,12 +39,18 @@ class UnifiedSensorService @Inject constructor(
         startSensor(Sensor.TYPE_ACCELEROMETER, "accelerometer", imuFrequency)
         startSensor(Sensor.TYPE_GYROSCOPE, "gyroscope", imuFrequency)
         startSensor(Sensor.TYPE_MAGNETIC_FIELD, "magnetometer", imuFrequency)
-        if (segmentNumber == 1){
+        if (segmentNumber == 1) {
             aggregator.startNewFile(currentVideoFile)
         }
     }
 
     private fun startSensor(type: Int, name: String, delay: Int) {
+        listeners.filter { it.key == type }.forEach {
+            CoroutineScope(Dispatchers.Default).launch {
+                sensorManager.unregisterListener(it.value)
+            }
+        }
+        listeners.remove(key = type)
         val sensor = sensorManager.getDefaultSensor(type) ?: return
         val listener = createListener(type, name)
         sensorManager.registerListener(listener, sensor, delay)

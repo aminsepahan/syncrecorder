@@ -135,7 +135,7 @@ fun SettingLayout(
                 Column(modifier = Modifier.weight(1f)) {
                     DropdownSelector(
                         label = "IMU Frequency",
-                        options = listOf(2, 5, 10, 15, 20, 30),
+                        options = listOf(1,2, 5, 10, 15, 30),
                         selectedOption = autoStopMinutes
                     ) {
                         autoStopMinutes = it

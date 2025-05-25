@@ -14,7 +14,8 @@ data class RecordingViewState(
     val durationMillis: Long = 0L,
     val settingsState: RecordingSettings = RecordingSettings(),
     val isSaving: Boolean = false,
-    val pendingSaveTasks: Int = 0
+    val pendingSaveTasks: Int = 0,
+    val segmentCount: Int = 1
 ) : BaseViewState {
     val formattedDuration: String
         get() = durationMillis.formatAsDuration()

@@ -107,7 +107,6 @@ class Camera2Recorder @Inject constructor(
         setupMediaRecorder(outputFile, settings)
 
         this.outputFile = outputFile
-        finalizeDeferred = CompletableDeferred()
 
         val recorderSurface = mediaRecorder!!.surface
         val surfaces = listOf(surface, recorderSurface)

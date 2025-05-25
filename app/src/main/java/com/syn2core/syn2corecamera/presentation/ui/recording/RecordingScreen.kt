@@ -46,6 +46,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.asFlow
@@ -56,7 +57,9 @@ import com.syn2core.syn2corecamera.presentation.components.KeepScreenOn
 import com.syn2core.syn2corecamera.presentation.components.SavingOverlay
 import com.syn2core.syn2corecamera.presentation.theme.DarkBackground
 import com.syn2core.syn2corecamera.presentation.theme.DarkGray
+import com.syn2core.syn2corecamera.presentation.theme.ErrorDark
 import com.syn2core.syn2corecamera.presentation.theme.ErrorLight
+import com.syn2core.syn2corecamera.presentation.theme.ErrorLightAlpha
 
 @Composable
 fun RecordingScreen(
@@ -153,7 +156,7 @@ fun RecordingLayout(
                             if (viewState.isRecording) {
                                 ErrorLight
                             } else {
-                                DarkBackground
+                                ErrorLightAlpha
                             },
                             DarkGray
                         )
@@ -194,7 +197,7 @@ fun RecordingLayout(
                         imageVector = Icons.Default.Settings,
                         contentDescription = "Settings",
                         tint = White,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(25.dp)
                     )
                 }
             }
@@ -230,7 +233,30 @@ fun RecordingLayout(
                     imageVector = if (viewState.isRecording) Icons.Default.Stop else Icons.Default.FiberManualRecord,
                     contentDescription = null,
                     tint = White,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(25.dp)
+                )
+            }
+            if (viewState.isRecording) {
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    text = viewState.segmentCount.toString(),
+                    color = White,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .size(60.dp)
+                        .padding(15.dp)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    ErrorLight,
+                                    ErrorDark
+                                )
+                            ),
+                            alpha = 0.6f,
+                            shape = RoundedCornerShape(corner = CornerSize(7.dp))
+                        )
+                        .padding(4.dp),
                 )
             }
         }

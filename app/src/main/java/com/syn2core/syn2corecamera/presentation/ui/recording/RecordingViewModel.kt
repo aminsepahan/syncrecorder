@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -97,7 +96,12 @@ class RecordingViewModel @Inject constructor(
             recordingVideoName = videoFileName
 
             durationMillisService.start(viewModelScope) { newDuration ->
-                updateState { it.copy(durationMillis = newDuration) }
+                updateState {
+                    it.copy(
+                        durationMillis = newDuration,
+                        segmentCount = 1
+                    )
+                }
             }
 
             startAutoRestartLoop(surface, settings)
@@ -131,7 +135,8 @@ class RecordingViewModel @Inject constructor(
         autoRestartJob?.cancel()
         autoRestartJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
-                delay(settings.autoStopMinutes * 60 * 1000L)
+                delay((settings.autoStopMinutes * 60 - 1) * 1000L)
+                updateState { it.copy(segmentCount = it.segmentCount + 1) }
                 recordingVideoName = cameraService.switchToNewSegment(surface = surface)
             }
         }

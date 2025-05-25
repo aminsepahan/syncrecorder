@@ -29,6 +29,7 @@ val OnSurfaceDark = Color(0xFFFAFAFA)
 
 // Error
 val ErrorLight = Color(0xFFB00020)
+val ErrorLightAlpha = Color(0x8BB00020)
 val ErrorDark = Color(0xFFCF6679)
 
 // On Error
