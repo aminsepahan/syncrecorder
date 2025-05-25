@@ -1,6 +1,5 @@
 package com.syn2core.syn2corecamera.service.sensor
 
-import JsonFileWriter
 import android.hardware.SensorEvent
 import com.syn2core.syn2corecamera.business.usecase.directory.GetSensorFileUseCase
 import com.syn2core.syn2corecamera.domain.SensorSnapshot

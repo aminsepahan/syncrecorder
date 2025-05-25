@@ -1,10 +1,11 @@
+package com.syn2core.syn2corecamera.service.sensor
+
 import com.google.gson.Gson
 import com.syn2core.syn2corecamera.domain.SensorSnapshot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
-import java.io.RandomAccessFile
 
 class JsonFileWriter() {
     private val gson = Gson()

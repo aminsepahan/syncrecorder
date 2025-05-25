@@ -56,9 +56,9 @@ import com.syn2core.syn2corecamera.presentation.components.CameraView
 import com.syn2core.syn2corecamera.presentation.components.KeepScreenOn
 import com.syn2core.syn2corecamera.presentation.components.SavingOverlay
 import com.syn2core.syn2corecamera.presentation.theme.DarkGray
+import com.syn2core.syn2corecamera.presentation.theme.ErrorColor
+import com.syn2core.syn2corecamera.presentation.theme.ErrorColorAlpha
 import com.syn2core.syn2corecamera.presentation.theme.ErrorDark
-import com.syn2core.syn2corecamera.presentation.theme.ErrorLight
-import com.syn2core.syn2corecamera.presentation.theme.ErrorLightAlpha
 
 @Composable
 fun RecordingScreen(
@@ -149,9 +149,9 @@ fun RecordingLayout(
                     brush = Brush.verticalGradient(
                         colors = listOf(
                             if (viewState.isRecording) {
-                                ErrorLight
+                                ErrorColor
                             } else {
-                                ErrorLightAlpha
+                                ErrorColorAlpha
                             },
                             DarkGray
                         )
@@ -211,7 +211,7 @@ fun RecordingLayout(
                 modifier = Modifier
                     .size(60.dp)
                     .clip(CircleShape)
-                    .background(ErrorLight)
+                    .background(ErrorColor)
                     .focusRequester(focusRequesterRecord)
                     .focusProperties {
                         next = focusRequesterSettings
@@ -244,7 +244,7 @@ fun RecordingLayout(
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    ErrorLight,
+                                    ErrorColor,
                                     ErrorDark
                                 )
                             ),

@@ -2,36 +2,21 @@ package com.syn2core.syn2corecamera.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary colors
-val TealPrimary = Color(0xFF00BFA5)
-val TealPrimaryDark = Color(0xFF64FFDA)
+val PrimaryColor = Color(0xFFB00020)
+val OnPrimaryColor = Color.White
 
-// Secondary
-val TealSecondary = Color(0xFF00897B)
-val TealSecondaryDark = Color(0xFF00BFA5)
+val SecondaryColor = Color(0xFF5D5D5D)
+val OnSecondaryColor = Color.White
 
-// Backgrounds
-val LightBackground = Color(0xFFFFFFFF)
-val DarkBackground = Color(0xFF121212)
-val DarkGray = Color(0xFF5D5D5D)
+val BackgroundColor = Color(0xFFFDFDFD)
+val OnBackgroundColor = Color(0xFF121212)
 
-// On Background
-val LightOnBackground = Color(0xFF212121)
-val DarkOnBackground = Color(0xFFE0E0E0)
+val SurfaceColor = Color(0xFFFFFFFF)
+val OnSurfaceColor = Color(0xFF212121)
 
-// Surface
-val LightSurface = Color(0xFFF5F5F5)
-val DarkSurface = Color(0xFF1E1E1E)
+val ErrorColor = PrimaryColor
+val OnErrorColor = OnPrimaryColor
 
-// On Surface
-val OnSurfaceLight = Color(0xFF212121)
-val OnSurfaceDark = Color(0xFFFAFAFA)
-
-// Error
-val ErrorLight = Color(0xFFB00020)
-val ErrorLightAlpha = Color(0x8BB00020)
+val ErrorColorAlpha = Color(0x8BB00020)
 val ErrorDark = Color(0xFFCF6679)
-
-// On Error
-val OnErrorLight = Color(0xFFFFFFFF)
-val OnErrorDark = Color(0xFF000000)
+val DarkGray = Color(0xFF5D5D5D)
