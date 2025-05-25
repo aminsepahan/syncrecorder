@@ -32,7 +32,7 @@ fun MainScreen(finish: () -> Unit) {
             }
         }
 
-        Screen.ShowByChart.route, Screen.Setting.route -> {
+        Screen.Setting.route -> {
             BackHandler {
                 router.goBack(Screen.Recording.route)
             }

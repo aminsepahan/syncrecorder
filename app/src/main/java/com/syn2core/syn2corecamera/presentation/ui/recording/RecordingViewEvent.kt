@@ -15,6 +15,5 @@ sealed class RecordingViewEvent : BaseViewEvent {
         val cameraSurface: Surface
     ) : RecordingViewEvent()
     object NavigateToSettings : RecordingViewEvent()
-    object NavigateToShowByChart : RecordingViewEvent()
     object LoadSettings : RecordingViewEvent()
 }

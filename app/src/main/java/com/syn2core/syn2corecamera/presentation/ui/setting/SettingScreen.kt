@@ -199,7 +199,6 @@ fun SettingLayout(
                     Text("Save")
                 }
             }
-
         }
     }
 }

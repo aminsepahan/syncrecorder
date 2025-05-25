@@ -31,5 +31,4 @@ open class HComponentActivity : ComponentActivity() {
         super.onResume()
         currentActivity = this
     }
-
 }

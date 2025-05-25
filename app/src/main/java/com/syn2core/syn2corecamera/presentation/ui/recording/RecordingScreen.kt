@@ -50,12 +50,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.asFlow
-import com.syn2core.syn2corecamera.extension.Helper
+import com.syn2core.syn2corecamera.extension.showMessage
 import com.syn2core.syn2corecamera.navigation.Router
 import com.syn2core.syn2corecamera.presentation.components.CameraView
 import com.syn2core.syn2corecamera.presentation.components.KeepScreenOn
 import com.syn2core.syn2corecamera.presentation.components.SavingOverlay
-import com.syn2core.syn2corecamera.presentation.theme.DarkBackground
 import com.syn2core.syn2corecamera.presentation.theme.DarkGray
 import com.syn2core.syn2corecamera.presentation.theme.ErrorDark
 import com.syn2core.syn2corecamera.presentation.theme.ErrorLight
@@ -80,15 +79,11 @@ fun RecordingScreen(
         when (viewEffect) {
             RecordingViewEffect.DoNothing -> {}
             RecordingViewEffect.RecordingStarted -> {
-                Helper.showMessage("Recording started.")
+                showMessage("Recording started.")
             }
 
             RecordingViewEffect.RecordingStopped -> {
-                Helper.showMessage("Recording saved.")
-            }
-
-            RecordingViewEffect.NavigateToShowByChart -> {
-                router?.goShowByChart()
+                showMessage("Recording saved.")
             }
 
             RecordingViewEffect.NavigateToSetting -> {
@@ -282,5 +277,4 @@ fun RecordingLayout(
 enum class Item {
     Record,
     Setting,
-    Charts,
 }

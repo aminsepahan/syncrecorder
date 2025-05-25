@@ -26,10 +26,10 @@ class CameraService @Inject constructor(
     suspend fun startRecordingAndSensors(
         surface: Surface,
         recordingSettings: RecordingSettings,
-    ): String {
+    ) {
         segmentCount = 0
         this.recordingSettings = recordingSettings
-        return startNewSegment(surface, recordingSettings)
+        startNewSegment(surface, recordingSettings)
     }
 
     suspend fun stopRecordingAndSensors() {

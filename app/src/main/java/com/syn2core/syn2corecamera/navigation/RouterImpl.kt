@@ -14,10 +14,6 @@ class RouterImpl(
         navigate(Screen.Permission)
     }
 
-    override fun goShowByChart() {
-        navigate(Screen.ShowByChart)
-    }
-
     override fun goSetting() {
         navigate(Screen.Setting)
     }

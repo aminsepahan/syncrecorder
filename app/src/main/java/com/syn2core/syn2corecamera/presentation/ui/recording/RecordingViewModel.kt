@@ -70,12 +70,6 @@ class RecordingViewModel @Inject constructor(
                     effect.postValue(RecordingViewEffect.NavigateToSetting)
                 }
             }
-
-            RecordingViewEvent.NavigateToShowByChart -> {
-                if (!_state.value.isRecording) {
-                    effect.postValue(RecordingViewEffect.NavigateToShowByChart)
-                }
-            }
         }
     }
 
@@ -89,7 +83,7 @@ class RecordingViewModel @Inject constructor(
 
             val settings = getRecordingSettingsUseCase()
 
-            val videoFileName = cameraService.startRecordingAndSensors(
+            cameraService.startRecordingAndSensors(
                 surface = surface,
                 recordingSettings = settings,
             )
