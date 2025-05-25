@@ -6,6 +6,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -29,12 +30,16 @@ class UnifiedSensorService @Inject constructor(
     }
 
     fun startSensors(
-        imuFrequency: Int
+        imuFrequency: Int,
+        segmentNumber: Int,
+        currentVideoFile: File
     ) {
         startSensor(Sensor.TYPE_ACCELEROMETER, "accelerometer", imuFrequency)
         startSensor(Sensor.TYPE_GYROSCOPE, "gyroscope", imuFrequency)
         startSensor(Sensor.TYPE_MAGNETIC_FIELD, "magnetometer", imuFrequency)
-        //startSensor(Sensor.TYPE_ACCELEROMETER, "accelerometer", imuFrequency)
+        if (segmentNumber == 1){
+            aggregator.startNewFile(currentVideoFile)
+        }
     }
 
     private fun startSensor(type: Int, name: String, delay: Int) {

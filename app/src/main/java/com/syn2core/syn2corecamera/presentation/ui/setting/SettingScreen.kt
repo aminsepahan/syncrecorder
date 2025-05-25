@@ -137,7 +137,13 @@ fun SettingLayout(
                     DropdownSelector("IMU Frequency", listOf(10, 50, 100), imuFrequency) {
                         imuFrequency = it
                     }
+                }
 
+                Column(modifier = Modifier.weight(1f)) {
+                    AutoStopInput(
+                        value = autoStopMinutes,
+                        onValueChange = { autoStopMinutes = it }
+                    )
                     Column(
                         Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.Top
@@ -153,13 +159,6 @@ fun SettingLayout(
                             Text("Stabilization", fontSize = 16.sp)
                         }
                     }
-                }
-
-                Column(modifier = Modifier.weight(1f)) {
-                    AutoStopInput(
-                        value = autoStopMinutes,
-                        onValueChange = { autoStopMinutes = it }
-                    )
                 }
             }
 

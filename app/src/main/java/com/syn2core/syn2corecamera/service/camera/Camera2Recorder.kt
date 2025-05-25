@@ -1,5 +1,6 @@
 package com.syn2core.syn2corecamera.service.camera
 
+import FrameFileWriter
 import android.annotation.SuppressLint
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
@@ -41,8 +42,7 @@ class Camera2Recorder @Inject constructor(
 
     private val cameraHandlerThread = HandlerThread("CameraBackground").apply { start() }
     private val cameraHandler = Handler(cameraHandlerThread.looper)
-
-    private val frameTimestamps = mutableListOf<Pair<Long, Long>>()
+    val frameFileWriter = FrameFileWriter()
 
     private val cameraId: String by lazy {
         cameraManager.cameraIdList.first {
@@ -99,8 +99,10 @@ class Camera2Recorder @Inject constructor(
         outputFile: File,
         settings: RecordingSettings,
         onStartSensor: () -> Unit,
+        segmentCount: Int,
     ) {
-        frameTimestamps.clear()
+
+        frameFileWriter.startNewSegment(segmentCount, outputFile)
 
         setupMediaRecorder(outputFile, settings)
 
@@ -138,7 +140,10 @@ class Camera2Recorder @Inject constructor(
                     timestamp: Long,
                     frameNumber: Long
                 ) {
-                    frameTimestamps.add(Pair(frameNumber, timestamp))
+                    frameFileWriter.appendNewFrame(
+                        frameNumber = frameNumber,
+                        frameTimestamp = timestamp
+                    )
                     if (!didSendStart) {
                         onStartSensor()
                         didSendStart = true
@@ -149,20 +154,14 @@ class Camera2Recorder @Inject constructor(
         )
     }
 
-    fun stopRecording(): File? {
-        return try {
+    fun stopRecording() {
+        try {
             mediaRecorder?.apply {
                 stop()
-
-                saveFrameTimestamps()
                 reset()
-                finalizeCallback?.invoke()
-                finalizeDeferred?.complete(Unit)
             }
-            outputFile
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Failed to stop MediaRecorder")
-            synchronized(frameTimestamps) { frameTimestamps.clear() }
             finalizeDeferred?.completeExceptionally(e)
             null
         }
@@ -219,14 +218,5 @@ class Camera2Recorder @Inject constructor(
             )
         }
 
-    private fun saveFrameTimestamps() {
-        val file = File(getSyn2CoreCameraDirectoryUseCase(), "frame_timestamps.txt")
-        val list = synchronized(frameTimestamps) { ArrayList(frameTimestamps) }
-        file.bufferedWriter().use {
-            it.write("index,timestamp_ms\n")
-            list.forEach { (frame, timestamp) ->
-                it.write("${frame + 1},${timestamp}\n")
-            }
-        }
-    }
+
 }

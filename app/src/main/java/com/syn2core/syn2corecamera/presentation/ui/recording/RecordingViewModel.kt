@@ -16,11 +16,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import javax.inject.Inject
@@ -46,7 +44,6 @@ class RecordingViewModel @Inject constructor(
     private var autoRestartJob: Job? = null
     private var recordingVideoName: String = ""
 
-    private val segmentMutex = Mutex()
 
     fun updateSurface(surface: Surface) {
         cameraSurface = surface
@@ -103,12 +100,6 @@ class RecordingViewModel @Inject constructor(
                 updateState { it.copy(durationMillis = newDuration) }
             }
 
-            viewModelScope.launch {
-                cameraService.pendingSaveTasks.collectLatest { size ->
-                    updateState { it.copy(pendingSaveTasks = size) }
-                }
-            }
-
             startAutoRestartLoop(surface, settings)
 
             updateState { it.copy(isRecording = true, durationMillis = 0L) }
@@ -117,25 +108,22 @@ class RecordingViewModel @Inject constructor(
     }
 
     private fun stopAll() {
-        viewModelScope.launch(Dispatchers.IO) {
-            segmentMutex.withLock {
-                autoRestartJob?.cancel()
-                autoRestartJob = null
-                durationMillisService.stop()
+        viewModelScope.launch(Dispatchers.Default) {
+            autoRestartJob?.cancel()
+            autoRestartJob = null
+            durationMillisService.stop()
 
-                updateState { it.copy(isSaving = true) }
+            cameraService.stopRecordingAndSensors()
 
-                cameraService.stopRecordingAndSensors()
-
-                updateState {
-                    it.copy(
-                        isRecording = false,
-                        isSaving = false
-                    )
-                }
-
-                effect.postValue(RecordingViewEffect.RecordingStopped)
+            updateState {
+                it.copy(
+                    isRecording = false,
+                    isSaving = false,
+                    durationMillis = 0
+                )
             }
+
+            effect.postValue(RecordingViewEffect.RecordingStopped)
         }
     }
 
@@ -144,9 +132,7 @@ class RecordingViewModel @Inject constructor(
         autoRestartJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
                 delay(settings.autoStopMinutes * 60 * 1000L)
-                segmentMutex.withLock {
-                    recordingVideoName = cameraService.switchToNewSegment(surface = surface)
-                }
+                recordingVideoName = cameraService.switchToNewSegment(surface = surface)
             }
         }
     }

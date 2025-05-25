@@ -31,9 +31,9 @@ class RecordingSettingsPreferences @Inject constructor(
             codec = prefs[KEY_CODEC] ?: "H264",
             autoFocus = prefs[KEY_AUTO_FOCUS] ?: true,
             stabilization = prefs[KEY_STABILIZATION] ?: true,
-            audioSource = prefs[KEY_AUDIO_SOURCE] ?: "MIC",
+            audioSource = prefs[KEY_AUDIO_SOURCE] ?: "CAMCORDER",
             imuFrequency = prefs[KEY_IMU_FREQ] ?: 100,
-            autoStopMinutes = prefs[KEY_AUTO_STOP_MINUTES] ?: 30
+            autoStopMinutes = prefs[KEY_AUTO_STOP_MINUTES] ?: 10
         )
     }
 

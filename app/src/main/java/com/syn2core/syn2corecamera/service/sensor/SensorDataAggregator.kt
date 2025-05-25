@@ -6,6 +6,7 @@ import com.syn2core.syn2corecamera.business.usecase.directory.GetSensorFileUseCa
 import com.syn2core.syn2corecamera.domain.SensorSnapshot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,7 +14,7 @@ import javax.inject.Singleton
 class SensorDataAggregator @Inject constructor(
     getSensorFileUseCase: GetSensorFileUseCase,
 ) {
-    private val jsonFileWriter = JsonFileWriter(getSensorFileUseCase(1))
+    private val jsonFileWriter = JsonFileWriter()
 
     fun recordEvent(type: Int, name: String, event: SensorEvent) {
 
@@ -28,5 +29,9 @@ class SensorDataAggregator @Inject constructor(
 
     suspend fun saveToJsonFile() = withContext(Dispatchers.IO) {
         jsonFileWriter.closeJsonArray()
+    }
+
+    fun startNewFile(currentVideoFile: File) {
+        jsonFileWriter.startNewFile(currentVideoFile)
     }
 }

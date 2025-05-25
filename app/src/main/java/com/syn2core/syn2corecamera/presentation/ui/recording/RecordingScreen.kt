@@ -172,33 +172,6 @@ fun RecordingLayout(
                         modifier = Modifier.size(22.dp)
                     )
                 }
-                Spacer(Modifier.width(10.dp))
-                IconButton(
-                    onClick = {
-                        onEventHandler(RecordingViewEvent.NavigateToShowByChart)
-                    },
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
-                        .focusRequester(focusRequesterChart)
-                        .focusProperties {
-                            next = focusRequesterRecord
-                            previous = focusRequesterSettings
-                        }
-                        .onFocusChanged { focusedItem.value = Item.Charts }
-                        .border(
-                            width = if (focusedItem.value == Item.Charts) 8.dp else 0.dp,
-                            color = White,
-                            shape = CircleShape,
-                        )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AreaChart,
-                        contentDescription = null,
-                        tint = White,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
             }
             Spacer(Modifier.width(10.dp))
             IconButton(
