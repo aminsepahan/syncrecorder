@@ -63,9 +63,10 @@ class CameraService @Inject constructor(
 
     suspend fun switchToNewSegment(
         surface: Surface,
-    ): String {
+    ): Int {
         sensorService.stopSensors()
         camera2Recorder.stopRecording()
-        return startNewSegment(surface, recordingSettings!!)
+        startNewSegment(surface, recordingSettings!!)
+        return segmentCount
     }
 }

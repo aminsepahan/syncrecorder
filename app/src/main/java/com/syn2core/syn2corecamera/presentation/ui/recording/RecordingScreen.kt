@@ -241,11 +241,11 @@ fun RecordingLayout(
                 Text(
                     text = viewState.segmentCount.toString(),
                     color = White,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.headlineSmall,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .size(60.dp)
-                        .padding(15.dp)
+                        .padding(12.dp)
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
@@ -256,7 +256,7 @@ fun RecordingLayout(
                             alpha = 0.6f,
                             shape = RoundedCornerShape(corner = CornerSize(7.dp))
                         )
-                        .padding(4.dp),
+                        .padding(5.dp),
                 )
             }
         }

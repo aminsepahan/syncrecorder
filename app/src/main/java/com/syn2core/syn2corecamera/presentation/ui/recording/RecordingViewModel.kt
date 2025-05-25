@@ -41,7 +41,7 @@ class RecordingViewModel @Inject constructor(
 
     private var cameraSurface: Surface? = null
     private var autoRestartJob: Job? = null
-    private var recordingVideoName: String = ""
+    private var segmentCount: Int = 0
 
 
     fun updateSurface(surface: Surface) {
@@ -93,13 +93,11 @@ class RecordingViewModel @Inject constructor(
                 surface = surface,
                 recordingSettings = settings,
             )
-            recordingVideoName = videoFileName
 
             durationMillisService.start(viewModelScope) { newDuration ->
                 updateState {
                     it.copy(
                         durationMillis = newDuration,
-                        segmentCount = 1
                     )
                 }
             }
@@ -136,8 +134,8 @@ class RecordingViewModel @Inject constructor(
         autoRestartJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
                 delay((settings.autoStopMinutes * 60 - 1) * 1000L)
-                updateState { it.copy(segmentCount = it.segmentCount + 1) }
-                recordingVideoName = cameraService.switchToNewSegment(surface = surface)
+                segmentCount = cameraService.switchToNewSegment(surface = surface)
+                updateState { it.copy(segmentCount = segmentCount) }
             }
         }
     }
