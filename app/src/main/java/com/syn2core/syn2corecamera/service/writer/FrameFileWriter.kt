@@ -1,3 +1,5 @@
+package com.syn2core.syn2corecamera.service.writer
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

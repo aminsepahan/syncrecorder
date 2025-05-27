@@ -1,4 +1,4 @@
-package com.syn2core.syn2corecamera.service.sensor
+package com.syn2core.syn2corecamera.service.writer
 
 import com.google.gson.Gson
 import com.syn2core.syn2corecamera.domain.SensorSnapshot

@@ -18,7 +18,6 @@
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
   <!-- IMU sensors -->
-  <uses-permission android:name="android.permission.BODY_SENSORS" />
   <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS"
     tools:ignore="HighSamplingRate" />
 
