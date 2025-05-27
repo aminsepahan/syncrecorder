@@ -1,6 +1,6 @@
 package com.syn2core.syn2corecamera.service.camera
 
-import com.syn2core.syn2corecamera.service.writer.FrameFileWriter
+import FrameFileWriter
 import android.annotation.SuppressLint
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics

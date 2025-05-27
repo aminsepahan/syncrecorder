@@ -11,6 +11,5 @@ data class PermissionViewState(
     val permissions: List<String> = listOf(
         android.Manifest.permission.CAMERA,
         android.Manifest.permission.RECORD_AUDIO,
-        android.Manifest.permission.BODY_SENSORS,
     )
 ) : BaseViewState

@@ -2,7 +2,6 @@ package com.syn2core.syn2corecamera.service.sensor
 
 import android.hardware.SensorEvent
 import com.syn2core.syn2corecamera.domain.SensorSnapshot
-import com.syn2core.syn2corecamera.service.writer.JsonFileWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
