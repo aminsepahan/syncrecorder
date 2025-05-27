@@ -29,7 +29,6 @@ import kotlin.coroutines.resumeWithException
 @Singleton
 class Camera2Recorder @Inject constructor(
     private val cameraManager: CameraManager,
-    private val getSyn2CoreCameraDirectoryUseCase: GetSyn2CoreCameraDirectoryUseCase,
 ) {
     private var cameraDevice: CameraDevice? = null
     private var mediaRecorder: MediaRecorder? = null

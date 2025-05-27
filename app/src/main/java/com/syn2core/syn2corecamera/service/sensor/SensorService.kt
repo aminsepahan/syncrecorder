@@ -17,11 +17,7 @@ class SensorService @Inject constructor(
         if (segmentNumber == 1) {
             aggregator.startNewFile(currentVideoFile)
         }
-        unifiedSensorService.startSensors(
-            imuFrequency = imuFrequency,
-            segmentNumber = segmentNumber,
-            currentVideoFile = currentVideoFile
-        )
+        unifiedSensorService.startSensors(imuFrequency = imuFrequency)
     }
 
     suspend fun stopSensors() = coroutineScope {
