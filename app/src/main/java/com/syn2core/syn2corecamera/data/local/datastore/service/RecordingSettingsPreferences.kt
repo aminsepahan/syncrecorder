@@ -33,7 +33,7 @@ class RecordingSettingsPreferences @Inject constructor(
             stabilization = prefs[KEY_STABILIZATION] ?: true,
             audioSource = prefs[KEY_AUDIO_SOURCE] ?: "CAMCORDER",
             imuFrequency = prefs[KEY_IMU_FREQ] ?: 100,
-            autoStopMinutes = prefs[KEY_AUTO_STOP_MINUTES] ?: 10
+            autoStopMinutes = prefs[KEY_AUTO_STOP_MINUTES] ?: 5
         )
     }
 

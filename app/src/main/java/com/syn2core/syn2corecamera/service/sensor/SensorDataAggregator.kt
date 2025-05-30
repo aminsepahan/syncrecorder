@@ -17,7 +17,7 @@ class SensorDataAggregator @Inject constructor() {
         val snapshot = SensorSnapshot(
             type = type,
             name = name,
-            timestampMillis = event.timestamp,
+            timestamp = event.timestamp,
             values = event.values.toList()
         )
         jsonFileWriter.appendJsonObject(snapshot)

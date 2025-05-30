@@ -2,11 +2,16 @@ package com.syn2core.syn2corecamera.presentation.ui.recording
 
 import android.view.Surface
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import com.syn2core.common.ui.base.BaseViewModel
 import com.syn2core.common.ui.livedata.SingleLiveData
 import com.syn2core.syn2corecamera.TAG
 import com.syn2core.syn2corecamera.business.usecase.setting.GetRecordingSettingsUseCase
 import com.syn2core.syn2corecamera.domain.RecordingSettings
+import com.syn2core.syn2corecamera.domain.SensorSnapshot
+import com.syn2core.syn2corecamera.extension.getFramesFile
+import com.syn2core.syn2corecamera.extension.getImuFile
+import com.syn2core.syn2corecamera.extension.lastLine
 import com.syn2core.syn2corecamera.service.camera.CameraService
 import com.syn2core.syn2corecamera.service.durationmillis.DurationMillisService
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,6 +25,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.io.File
 import javax.inject.Inject
 
 /**
@@ -41,7 +47,10 @@ class RecordingViewModel @Inject constructor(
 
     private var cameraSurface: Surface? = null
     private var autoRestartJob: Job? = null
+    private var progressCheck: Job? = null
     private var segmentCount: Int = 0
+
+    private var currentVideoFile: File? = null
 
 
     fun updateSurface(surface: Surface) {
@@ -83,7 +92,7 @@ class RecordingViewModel @Inject constructor(
 
             val settings = getRecordingSettingsUseCase()
 
-            cameraService.startRecordingAndSensors(
+            currentVideoFile = cameraService.startRecordingAndSensors(
                 surface = surface,
                 recordingSettings = settings,
             )
@@ -108,9 +117,7 @@ class RecordingViewModel @Inject constructor(
             autoRestartJob?.cancel()
             autoRestartJob = null
             durationMillisService.stop()
-
             cameraService.stopRecordingAndSensors()
-
             updateState {
                 it.copy(
                     isRecording = false,
@@ -131,14 +138,52 @@ class RecordingViewModel @Inject constructor(
                 updateState { it.copy(segmentCount = segmentCount) }
             }
         }
-        viewModelScope.launch {
-            delay(1000L)
-            checkIMUWritingProgress()
+        progressCheck?.cancel()
+        progressCheck = viewModelScope.launch {
+            while (isActive){
+                delay(1000L)
+                checkIMUWritingProgress()
+            }
         }
     }
 
     private fun checkIMUWritingProgress() {
+        currentVideoFile?.let {
+            val lastFrameLine = it.getFramesFile().lastLine ?: return
+            var index = lastFrameLine.indexOf(",")
+            val lastFrameTimestamp = if (index == -1) {
+                return
+            } else {
+                lastFrameLine.substring(index + 1).toLongOrNull() ?: return
+            }
+            val lastImu = it.getImuFile().lastLine ?: return
+            val lastImuTimeStamp = try {
+                Gson().fromJson(
+                    lastImu.dropLast(1),
+                    SensorSnapshot::class.java
+                ).timestamp
+            } catch (e: Exception) {
+                return
+            }
+            val firstFrameLine = it.getFramesFile()
+                .bufferedReader()
+                .useLines { lines ->
+                    lines.elementAtOrNull(2) ?: ""
+                }
 
+            index = firstFrameLine.indexOf(",")
+            val firstTimestamp = if (index == -1) {
+                return
+            } else {
+                firstFrameLine.substring(index + 1).toLongOrNull() ?: return
+            }
+            val percent = ((lastImuTimeStamp - firstTimestamp) * 100 / (lastFrameTimestamp - firstTimestamp)).toInt()
+            updateState {
+                it.copy(
+                    imuWritingPercent = percent
+                )
+            }
+        }
     }
 
     private fun updateState(update: (RecordingViewState) -> RecordingViewState) {

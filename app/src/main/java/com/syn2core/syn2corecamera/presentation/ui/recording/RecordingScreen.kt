@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -161,6 +162,7 @@ fun RecordingLayout(
             if (viewState.isRecording) {
                 SegmentCountBadge(viewState.segmentCount)
             }
+            ImuWritingBadge(viewState.imuWritingPercent)
         }
     }
 }
@@ -230,15 +232,15 @@ private fun FocusableIconButton(
 
 @Composable
 private fun SegmentCountBadge(count: Int) {
-    Spacer(Modifier.width(4.dp))
+    Spacer(Modifier.width(2.dp))
     Text(
         text = count.toString(),
         color = White,
         style = MaterialTheme.typography.headlineSmall,
         textAlign = TextAlign.Center,
         modifier = Modifier
-            .size(60.dp)
-            .padding(12.dp)
+            .height(60.dp)
+            .padding(vertical = 10.dp)
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
@@ -246,10 +248,34 @@ private fun SegmentCountBadge(count: Int) {
                         ErrorDark
                     )
                 ),
-                alpha = 0.6f,
-                shape = RoundedCornerShape(corner = CornerSize(7.dp))
+                alpha = 0.7f,
+                shape = RoundedCornerShape(corner = CornerSize(3.dp))
             )
-            .padding(5.dp),
+            .padding(8.dp),
+    )
+}
+@Composable
+private fun ImuWritingBadge(percent: Int) {
+    Spacer(Modifier.width(2.dp))
+    Text(
+        text = "$percent%",
+        color = White,
+        style = MaterialTheme.typography.headlineSmall,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .height(60.dp)
+            .padding(vertical = 10.dp)
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        DarkGray,
+                        DarkGray
+                    )
+                ),
+                alpha = 0.7f,
+                shape = RoundedCornerShape(corner = CornerSize(3.dp))
+            )
+            .padding(8.dp),
     )
 }
 
