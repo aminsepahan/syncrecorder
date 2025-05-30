@@ -1,9 +1,10 @@
 package com.syn2core.syn2corecamera.presentation.ui.recording
 
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -49,6 +50,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.asFlow
+import com.syn2core.syn2corecamera.domain.RecordingSettings
 import com.syn2core.syn2corecamera.extension.showMessage
 import com.syn2core.syn2corecamera.navigation.Router
 import com.syn2core.syn2corecamera.presentation.components.CameraView
@@ -141,6 +143,7 @@ private fun RecordingScreenButtonsAndUi(
         focusRequesterRecord.requestFocus()
     }
     Box(modifier = Modifier.fillMaxSize()) {
+        SettingsPreview(viewState.settingsState)
         DurationDisplay(
             modifier = Modifier.align(Alignment.TopCenter),
             viewState = viewState
@@ -183,6 +186,46 @@ private fun RecordingScreenButtonsAndUi(
             }
             ImuWritingBadge(viewState.imuWritingPercent)
         }
+    }
+}
+
+@Composable
+fun BoxScope.SettingsPreview(settingsState: RecordingSettings) {
+    Column(
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .padding(16.dp)
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        DarkGray,
+                        DarkGray
+                    )
+                ),
+                alpha = 0.8f,
+                shape = RoundedCornerShape(corner = CornerSize(3.dp))
+            ).padding(5.dp),
+    ) {
+        Text(
+            text = "Autosave intervals: ${settingsState.autoStopMinutes}",
+            style = MaterialTheme.typography.bodySmall,
+            color = White
+        )
+        Text(
+            text = "Rsolution: ${settingsState.resolution}",
+            style = MaterialTheme.typography.bodySmall,
+            color = White
+        )
+        Text(
+            text = "IMU frequency: ${settingsState.imuFrequency}",
+            style = MaterialTheme.typography.bodySmall,
+            color = White
+        )
+        Text(
+            text = "framerate: ${settingsState.frameRate}",
+            style = MaterialTheme.typography.bodySmall,
+            color = White
+        )
     }
 }
 
@@ -273,6 +316,7 @@ private fun SegmentCountBadge(count: Int) {
             .padding(8.dp),
     )
 }
+
 @Composable
 private fun ImuWritingBadge(percent: Int) {
     Spacer(Modifier.width(2.dp))
@@ -300,7 +344,7 @@ private fun ImuWritingBadge(percent: Int) {
 
 @Preview(heightDp = 360, widthDp = 640)
 @Composable
-fun RecordScreenPreview(){
+fun RecordScreenPreview() {
     RecordingScreenButtonsAndUi(
         viewState = RecordingViewState(),
         onEventHandler = {}
