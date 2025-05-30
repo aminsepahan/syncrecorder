@@ -14,7 +14,7 @@ data class RecordingViewState(
     val durationMillis: Long = 0L,
     val settingsState: RecordingSettings = RecordingSettings(),
     val segmentCount: Int = 1,
-    val imuWritingPercent: Int = 100
+    val imuWritingPercent: Int = 100,
 ) : BaseViewState {
     val formattedDuration: String
         get() = durationMillis.formatAsDuration()
