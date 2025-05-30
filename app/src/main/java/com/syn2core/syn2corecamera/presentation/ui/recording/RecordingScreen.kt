@@ -143,7 +143,7 @@ private fun RecordingScreenButtonsAndUi(
         focusRequesterRecord.requestFocus()
     }
     Box(modifier = Modifier.fillMaxSize()) {
-        SettingsPreview(viewState.settingsState)
+        SettingsPreview(viewState = viewState)
         DurationDisplay(
             modifier = Modifier.align(Alignment.TopCenter),
             viewState = viewState
@@ -190,7 +190,7 @@ private fun RecordingScreenButtonsAndUi(
 }
 
 @Composable
-fun BoxScope.SettingsPreview(settingsState: RecordingSettings) {
+fun BoxScope.SettingsPreview(viewState: RecordingViewState) {
     Column(
         modifier = Modifier
             .align(Alignment.TopEnd)
@@ -207,25 +207,39 @@ fun BoxScope.SettingsPreview(settingsState: RecordingSettings) {
             ).padding(5.dp),
     ) {
         Text(
-            text = "Autosave intervals: ${settingsState.autoStopMinutes}",
+            text = "Autosave intervals: ${viewState.settingsState.autoStopMinutes}",
             style = MaterialTheme.typography.bodySmall,
             color = White
         )
         Text(
-            text = "Rsolution: ${settingsState.resolution}",
+            text = "Rsolution: ${viewState.settingsState.resolution}",
             style = MaterialTheme.typography.bodySmall,
             color = White
         )
         Text(
-            text = "IMU frequency: ${settingsState.imuFrequency}",
+            text = "IMU frequency: ${viewState.settingsState.imuFrequency}",
             style = MaterialTheme.typography.bodySmall,
             color = White
         )
         Text(
-            text = "framerate: ${settingsState.frameRate}",
+            text = "framerate: ${viewState.settingsState.frameRate}",
             style = MaterialTheme.typography.bodySmall,
             color = White
         )
+        if (viewState.latestFrameTimestamp >0L){
+            Text(
+                text = "last frame ts: ${viewState.latestFrameTimestamp}",
+                style = MaterialTheme.typography.bodySmall,
+                color = White
+            )
+        }
+        if (viewState.latestImuTimestamp >0L){
+            Text(
+                text = "last IMU ts: ${viewState.latestImuTimestamp}",
+                style = MaterialTheme.typography.bodySmall,
+                color = White
+            )
+        }
     }
 }
 

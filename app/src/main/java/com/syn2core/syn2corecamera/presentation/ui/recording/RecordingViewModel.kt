@@ -180,7 +180,9 @@ class RecordingViewModel @Inject constructor(
             val percent = ((lastImuTimeStamp - firstTimestamp) * 100 / (lastFrameTimestamp - firstTimestamp)).toInt()
             updateState { state ->
                 state.copy(
-                    imuWritingPercent = percent
+                    imuWritingPercent = percent,
+                    latestImuTimestamp = lastImuTimeStamp / 1_000_000,
+                    latestFrameTimestamp = lastFrameTimestamp / 1_000_000
                 )
             }
         }
