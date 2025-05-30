@@ -1,3 +1,4 @@
+import com.syn2core.syn2corecamera.extension.getFramesFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -9,14 +10,7 @@ class FrameFileWriter() {
 
     fun startNewSegment(segmentNumber: Int, videoFile: File) {
         if (segmentNumber == 1) {
-            file = File(
-                videoFile.parentFile,
-                videoFile.name.replace(
-                    oldValue = ".mp4",
-                    newValue = "_ft.txt"
-                )
-            )
-
+            file = videoFile.getFramesFile()
             file.appendText("frameNumber, frameTimestamp\n")
         }
         file.appendText("----- Segment $segmentNumber ---\n")

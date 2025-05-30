@@ -131,6 +131,14 @@ class RecordingViewModel @Inject constructor(
                 updateState { it.copy(segmentCount = segmentCount) }
             }
         }
+        viewModelScope.launch {
+            delay(1000L)
+            checkIMUWritingProgress()
+        }
+    }
+
+    private fun checkIMUWritingProgress() {
+
     }
 
     private fun updateState(update: (RecordingViewState) -> RecordingViewState) {

@@ -2,6 +2,7 @@ package com.syn2core.syn2corecamera.service.sensor
 
 import com.google.gson.Gson
 import com.syn2core.syn2corecamera.domain.SensorSnapshot
+import com.syn2core.syn2corecamera.extension.getImuFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -12,13 +13,7 @@ class JsonFileWriter() {
     lateinit var file: File
 
     fun startNewFile(videoFile: File) {
-        file = File(
-            videoFile.parentFile,
-            videoFile.name.replace(
-                oldValue = ".mp4",
-                newValue = "_imu.json"
-            )
-        )
+        file = videoFile.getImuFile()
         file.appendText("[")
     }
 
