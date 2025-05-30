@@ -1,5 +1,6 @@
 package com.syn2core.syn2corecamera.presentation.ui.recording
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -44,6 +45,7 @@ import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.asFlow
@@ -65,10 +67,8 @@ fun RecordingScreen(
 
     val viewState by viewModel.state.collectAsState()
     val viewEffect by viewModel.effect.asFlow().collectAsState(RecordingViewEffect.DoNothing)
-    val (focusRequesterRecord, focusRequesterSettings) = remember { FocusRequester.createRefs() }
 
     LaunchedEffect(Unit) {
-        focusRequesterRecord.requestFocus()
         viewModel.processEvent(RecordingViewEvent.LoadSettings)
     }
 
@@ -86,8 +86,6 @@ fun RecordingScreen(
         viewState = viewState,
         viewModel = viewModel,
         onEventHandler = viewModel::processEvent,
-        focusRequesterRecord = focusRequesterRecord,
-        focusRequesterSettings = focusRequesterSettings
     )
 }
 
@@ -96,12 +94,9 @@ fun RecordingLayout(
     viewState: RecordingViewState,
     viewModel: RecordingViewModel,
     onEventHandler: (RecordingViewEvent) -> Unit,
-    focusRequesterRecord: FocusRequester,
-    focusRequesterSettings: FocusRequester,
 ) {
-    val context = LocalContext.current
-    val focusedItem = remember { mutableStateOf(Item.Record) }
 
+    val context = LocalContext.current
     Box(modifier = Modifier.fillMaxSize()) {
         val resolution = viewState.settingsState.getResolutionSize()
 
@@ -115,6 +110,37 @@ fun RecordingLayout(
             )
         }
 
+        RecordingScreenButtonsAndUi(
+            viewState,
+            onEventHandler,
+            onRecordButtonClick = {
+                viewModel.getSurface()?.let { surface ->
+                    onEventHandler(
+                        RecordingViewEvent.ToggleRecording(
+                            context = context,
+                            cameraSurface = surface
+                        )
+                    )
+                }
+            }
+        )
+
+    }
+}
+
+@Composable
+private fun RecordingScreenButtonsAndUi(
+    viewState: RecordingViewState,
+    onEventHandler: (RecordingViewEvent) -> Unit,
+    onRecordButtonClick: () -> Unit = {}
+) {
+
+    val (focusRequesterRecord, focusRequesterSettings) = remember { FocusRequester.createRefs() }
+    val focusedItem = remember { mutableStateOf(Item.Record) }
+    LaunchedEffect(Unit) {
+        focusRequesterRecord.requestFocus()
+    }
+    Box(modifier = Modifier.fillMaxSize()) {
         DurationDisplay(
             modifier = Modifier.align(Alignment.TopCenter),
             viewState = viewState
@@ -149,14 +175,7 @@ fun RecordingLayout(
                 item = Item.Record,
                 backgroundColor = ErrorColor
             ) {
-                viewModel.getSurface()?.let { surface ->
-                    onEventHandler(
-                        RecordingViewEvent.ToggleRecording(
-                            context = context,
-                            cameraSurface = surface
-                        )
-                    )
-                }
+                onRecordButtonClick()
             }
 
             if (viewState.isRecording) {
@@ -248,7 +267,7 @@ private fun SegmentCountBadge(count: Int) {
                         ErrorDark
                     )
                 ),
-                alpha = 0.7f,
+                alpha = 0.8f,
                 shape = RoundedCornerShape(corner = CornerSize(3.dp))
             )
             .padding(8.dp),
@@ -272,10 +291,19 @@ private fun ImuWritingBadge(percent: Int) {
                         DarkGray
                     )
                 ),
-                alpha = 0.7f,
+                alpha = 0.8f,
                 shape = RoundedCornerShape(corner = CornerSize(3.dp))
             )
             .padding(8.dp),
+    )
+}
+
+@Preview(heightDp = 360, widthDp = 640)
+@Composable
+fun RecordScreenPreview(){
+    RecordingScreenButtonsAndUi(
+        viewState = RecordingViewState(),
+        onEventHandler = {}
     )
 }
 

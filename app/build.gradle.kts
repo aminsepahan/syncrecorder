@@ -83,6 +83,7 @@ dependencies {
 
     //==================== Hilt ====================
     implementation(libs.hilt.android)
+    debugImplementation(libs.androidx.ui.tooling)
     ksp(libs.hilt.compiler)   // Hilt compiler
     implementation(libs.androidx.hilt.work)
     implementation(libs.androidx.work.runtime.ktx)

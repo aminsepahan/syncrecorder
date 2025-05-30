@@ -141,7 +141,7 @@ class RecordingViewModel @Inject constructor(
         progressCheck?.cancel()
         progressCheck = viewModelScope.launch {
             while (isActive){
-                delay(1000L)
+                delay(2000L)
                 checkIMUWritingProgress()
             }
         }
@@ -178,8 +178,8 @@ class RecordingViewModel @Inject constructor(
                 firstFrameLine.substring(index + 1).toLongOrNull() ?: return
             }
             val percent = ((lastImuTimeStamp - firstTimestamp) * 100 / (lastFrameTimestamp - firstTimestamp)).toInt()
-            updateState {
-                it.copy(
+            updateState { state ->
+                state.copy(
                     imuWritingPercent = percent
                 )
             }
