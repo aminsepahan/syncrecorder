@@ -12,7 +12,6 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.view.Surface
 import com.syn2core.syn2corecamera.TAG
-import com.syn2core.syn2corecamera.business.usecase.directory.GetSyn2CoreCameraDirectoryUseCase
 import com.syn2core.syn2corecamera.domain.RecordingSettings
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +33,6 @@ class Camera2Recorder @Inject constructor(
     private var mediaRecorder: MediaRecorder? = null
     private var captureSession: CameraCaptureSession? = null
     private var outputFile: File? = null
-    private var finalizeCallback: (() -> Unit)? = null
     private var previewSurface: Surface? = null
     var finalizeDeferred: CompletableDeferred<Unit>? = null
         private set
