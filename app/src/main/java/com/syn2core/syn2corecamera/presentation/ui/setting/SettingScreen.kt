@@ -3,6 +3,7 @@ package com.syn2core.syn2corecamera.presentation.ui.setting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -90,13 +91,6 @@ fun SettingLayout(
                 horizontalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    DropdownSelector(
-                        label = "Resolution",
-                        options = listOf("480p", "720p", "1080p", "4K"),
-                        selectedOption = resolution
-                    ) {
-                        resolution = it
-                    }
 
                     DropdownSelector(
                         label = "Frame Rate",
@@ -135,7 +129,7 @@ fun SettingLayout(
 
                 Column(modifier = Modifier.weight(1f)) {
                     DropdownSelector(
-                        label = "IMU Frequency",
+                        label = "Auto Stop Minutes",
                         options = listOf(1,2, 5, 10, 15, 30),
                         selectedOption = autoStopMinutes
                     ) {
@@ -167,8 +161,8 @@ fun SettingLayout(
                     }
                 }
             }
-
-            Row {
+            Spacer(modifier = Modifier.weight(1f))
+            Row(modifier = Modifier.padding(bottom = 10.dp)) {
                 Button(
                     modifier = Modifier.weight(1f).padding(end = 16.dp),
                     onClick = {
