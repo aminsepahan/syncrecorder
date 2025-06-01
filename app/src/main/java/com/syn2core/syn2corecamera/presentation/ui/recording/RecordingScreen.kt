@@ -147,7 +147,7 @@ private fun RecordingScreenButtonsAndUi(
     onResolutionSet: (String) -> Unit = {}
 ) {
 
-    val (focusRequesterRecord, focusRequesterSettings) = remember { FocusRequester.createRefs() }
+    val (focusRequesterRecord, focusRequesterSettings, focusRequesterResolution) = remember { FocusRequester.createRefs() }
     val focusedItem = remember { mutableStateOf(Item.Record) }
     LaunchedEffect(Unit) {
         focusRequesterRecord.requestFocus()
@@ -161,7 +161,16 @@ private fun RecordingScreenButtonsAndUi(
 
         if (viewState.isRecording.not()) {
             DropdownSelector(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).padding(bottom = 10.dp).width(150.dp),
+                modifier = Modifier.align(Alignment.BottomEnd)
+                    .padding(16.dp)
+                    .padding(bottom = 10.dp)
+                    .width(150.dp)
+                    .focusRequester(focusRequesterResolution)
+                    .focusProperties {
+                        this.next = focusRequesterSettings
+                        this.previous = focusRequesterRecord
+                    }
+                    .onFocusChanged { focusedItem.value = Item.Resolution },
                 label = "Resolution",
                 options = listOf("480p", "720p", "1080p", "4K"),
                 selectedOption = viewState.settingsState.resolution
@@ -390,4 +399,5 @@ fun RecordScreenPreview() {
 enum class Item {
     Record,
     Setting,
+    Resolution
 }
