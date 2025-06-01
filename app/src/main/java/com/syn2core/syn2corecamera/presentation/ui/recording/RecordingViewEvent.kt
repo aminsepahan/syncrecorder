@@ -3,6 +3,7 @@ package com.syn2core.syn2corecamera.presentation.ui.recording
 import android.content.Context
 import android.view.Surface
 import com.syn2core.common.ui.base.BaseViewEvent
+import com.syn2core.syn2corecamera.domain.RecordingSettings
 
 /**
  *
@@ -16,4 +17,5 @@ sealed class RecordingViewEvent : BaseViewEvent {
     ) : RecordingViewEvent()
     object NavigateToSettings : RecordingViewEvent()
     object LoadSettings : RecordingViewEvent()
+    data class SetResolution(val setting: RecordingSettings) : RecordingViewEvent()
 }

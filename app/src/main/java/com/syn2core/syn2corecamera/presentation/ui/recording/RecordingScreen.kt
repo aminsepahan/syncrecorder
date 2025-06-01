@@ -50,10 +50,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.asFlow
-import com.syn2core.syn2corecamera.domain.RecordingSettings
 import com.syn2core.syn2corecamera.extension.showMessage
 import com.syn2core.syn2corecamera.navigation.Router
 import com.syn2core.syn2corecamera.presentation.components.CameraView
+import com.syn2core.syn2corecamera.presentation.components.DropdownSelector
 import com.syn2core.syn2corecamera.presentation.components.KeepScreenOn
 import com.syn2core.syn2corecamera.presentation.theme.DarkGray
 import com.syn2core.syn2corecamera.presentation.theme.ErrorColor
@@ -113,8 +113,8 @@ fun RecordingLayout(
         }
 
         RecordingScreenButtonsAndUi(
-            viewState,
-            onEventHandler,
+            viewState = viewState,
+            onEventHandler = onEventHandler,
             onRecordButtonClick = {
                 viewModel.getSurface()?.let { surface ->
                     onEventHandler(
@@ -124,6 +124,15 @@ fun RecordingLayout(
                         )
                     )
                 }
+            },
+            onResolutionSet = {
+                viewModel.processEvent(
+                    RecordingViewEvent.SetResolution(
+                        viewState.settingsState.copy(
+                            resolution = it
+                        )
+                    )
+                )
             }
         )
 
@@ -134,7 +143,8 @@ fun RecordingLayout(
 private fun RecordingScreenButtonsAndUi(
     viewState: RecordingViewState,
     onEventHandler: (RecordingViewEvent) -> Unit,
-    onRecordButtonClick: () -> Unit = {}
+    onRecordButtonClick: () -> Unit = {},
+    onResolutionSet: (String) -> Unit = {}
 ) {
 
     val (focusRequesterRecord, focusRequesterSettings) = remember { FocusRequester.createRefs() }
@@ -148,6 +158,17 @@ private fun RecordingScreenButtonsAndUi(
             modifier = Modifier.align(Alignment.TopCenter),
             viewState = viewState
         )
+
+        if (viewState.isRecording.not()) {
+            DropdownSelector(
+                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).padding(bottom = 10.dp).width(150.dp),
+                label = "Resolution",
+                options = listOf("480p", "720p", "1080p", "4K"),
+                selectedOption = viewState.settingsState.resolution
+            ) {
+                onResolutionSet(it)
+            }
+        }
 
         Row(
             modifier = Modifier
@@ -204,7 +225,8 @@ fun BoxScope.SettingsPreview(viewState: RecordingViewState) {
                 ),
                 alpha = 0.8f,
                 shape = RoundedCornerShape(corner = CornerSize(3.dp))
-            ).padding(5.dp),
+            )
+            .padding(5.dp),
     ) {
         Text(
             text = "Autosave intervals: ${viewState.settingsState.autoStopMinutes}",
@@ -226,14 +248,14 @@ fun BoxScope.SettingsPreview(viewState: RecordingViewState) {
             style = MaterialTheme.typography.bodySmall,
             color = White
         )
-        if (viewState.latestFrameTimestamp >0L){
+        if (viewState.latestFrameTimestamp > 0L) {
             Text(
                 text = "last frame ts: ${viewState.latestFrameTimestamp}",
                 style = MaterialTheme.typography.bodySmall,
                 color = White
             )
         }
-        if (viewState.latestImuTimestamp >0L){
+        if (viewState.latestImuTimestamp > 0L) {
             Text(
                 text = "last IMU ts: ${viewState.latestImuTimestamp}",
                 style = MaterialTheme.typography.bodySmall,

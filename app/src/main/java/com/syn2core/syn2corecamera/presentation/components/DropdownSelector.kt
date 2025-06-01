@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun <T> DropdownSelector(
+    modifier: Modifier = Modifier,
     label: String,
     options: List<T>,
     selectedOption: T,
@@ -32,7 +33,7 @@ fun <T> DropdownSelector(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
@@ -60,7 +61,7 @@ fun <T> DropdownSelector(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surface)
         ) {
