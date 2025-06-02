@@ -6,14 +6,14 @@ import androidx.annotation.Keep
 
 @Keep
 data class RecordingSettings(
-    val resolution: String = "720p",
+    val resolution: String = "1080p",
     val frameRate: Int = 30,
     val codec: String = "H.264",
     val autoFocus: Boolean = true,
-    val stabilization: Boolean = false,
+    val stabilization: Boolean = true,
     val audioSource: String = "CAMCORDER",
     val imuFrequency: Int = 100,
-    val autoStopMinutes: Int = 5
+    val autoStopMinutes: Int = 15
 ) {
     fun getResolutionSize(): Pair<Int, Int> = when (resolution) {
         "480p" -> 720 to 480

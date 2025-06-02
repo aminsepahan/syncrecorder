@@ -24,6 +24,6 @@ class MainActivity : HComponentActivity() {
     }
 
     private val finish: () -> Unit = {
-        finishAndRemoveTask()
+        finishAffinity()
     }
 }

@@ -50,7 +50,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.asFlow
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.syn2core.syn2corecamera.extension.showMessage
 import com.syn2core.syn2corecamera.navigation.Router
 import com.syn2core.syn2corecamera.presentation.components.CameraView
@@ -70,9 +72,22 @@ fun RecordingScreen(
 
     val viewState by viewModel.state.collectAsState()
     val viewEffect by viewModel.effect.asFlow().collectAsState(RecordingViewEffect.DoNothing)
-
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
     LaunchedEffect(Unit) {
         viewModel.processEvent(RecordingViewEvent.LoadSettings)
+    }
+    LaunchedEffect(lifecycleState) {
+        // Do something with your state
+        // You may want to use DisposableEffect or other alternatives
+        // instead of LaunchedEffect
+        when (lifecycleState) {
+            Lifecycle.State.DESTROYED -> {}
+            Lifecycle.State.INITIALIZED -> {}
+            Lifecycle.State.CREATED -> {}
+            Lifecycle.State.STARTED -> {}
+            Lifecycle.State.RESUMED -> {}
+        }
     }
 
     LaunchedEffect(viewEffect) {
@@ -103,15 +118,15 @@ fun RecordingLayout(
     Box(modifier = Modifier.fillMaxSize()) {
         val resolution = viewState.settingsState.getResolutionSize()
 
-        key(resolution) {
-            CameraView(
-                modifier = Modifier.fillMaxSize(),
-                resolution = resolution,
-                onSurfaceReady = {
-                    viewModel.updateSurface(it)
-                }
-            )
-        }
+        CameraView(
+            modifier = Modifier.fillMaxSize(),
+            resolution = resolution,
+            onSurfaceReady = {
+                viewModel.updateSurface(it)
+            }
+        )
+//        key(resolution) {
+//        }
 
         RecordingScreenButtonsAndUi(
             viewState = viewState,
@@ -185,7 +200,7 @@ private fun RecordingScreenButtonsAndUi(
                     )
                     .padding(10.dp),
                 label = "Resolution",
-                options = listOf("480p", "720p", "1080p", "4K"),
+                options = listOf("480p", "720p", "1080p"),
                 selectedOption = viewState.settingsState.resolution,
             ) {
                 onResolutionSet(it)

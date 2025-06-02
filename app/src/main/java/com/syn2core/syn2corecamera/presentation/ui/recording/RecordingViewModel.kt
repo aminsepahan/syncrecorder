@@ -190,4 +190,9 @@ class RecordingViewModel @Inject constructor(
     fun clearEffect() {
         effect.postValue(RecordingViewEffect.DoNothing)
     }
+
+    override fun onCleared() {
+        cameraService.stopCamera()
+        super.onCleared()
+    }
 }

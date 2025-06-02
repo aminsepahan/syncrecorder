@@ -15,6 +15,7 @@ import com.syn2core.syn2corecamera.TAG
 import com.syn2core.syn2corecamera.domain.RecordingSettings
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -50,6 +51,7 @@ class Camera2Recorder @Inject constructor(
 
     @SuppressLint("MissingPermission")
     fun startPreview(surface: Surface) {
+        previewSurface = null
         previewSurface = surface
         cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
             override fun onOpened(device: CameraDevice) {
@@ -58,13 +60,12 @@ class Camera2Recorder @Inject constructor(
             }
 
             override fun onDisconnected(camera: CameraDevice) {
-                camera.close()
-                cameraDevice = null
+                stopCamera()
+                Timber.d("############ onDisconnected")
             }
 
             override fun onError(camera: CameraDevice, error: Int) {
-                camera.close()
-                cameraDevice = null
+                stopCamera()
                 Timber.e("Camera open error: $error")
             }
         }, cameraHandler)
@@ -212,6 +213,11 @@ class Camera2Recorder @Inject constructor(
                 cameraHandler
             )
         }
+
+    fun stopCamera() {
+        cameraDevice?.close()
+        cameraDevice = null
+    }
 
 
 }

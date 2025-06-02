@@ -69,4 +69,8 @@ class CameraService @Inject constructor(
         startNewSegment(surface, recordingSettings!!)
         return segmentCount
     }
+
+    fun stopCamera() {
+        camera2Recorder.stopCamera()
+    }
 }
