@@ -3,7 +3,6 @@ package com.syn2core.syn2corecamera.presentation.ui.recording
 import com.syn2core.common.ui.base.BaseViewState
 import com.syn2core.syn2corecamera.domain.RecordingSettings
 import com.syn2core.syn2corecamera.extension.formatAsDuration
-import java.sql.Timestamp
 
 /**
  *
@@ -15,9 +14,10 @@ data class RecordingViewState(
     val durationMillis: Long = 0L,
     val settingsState: RecordingSettings = RecordingSettings(),
     val segmentCount: Int = 1,
-    val imuWritingPercent: Int = 100,
+    val timestampDifference: Long = 0,
     val latestFrameTimestamp: Long = 0L,
-    val latestImuTimestamp: Long = 0L
+    val latestImuTimestamp: Long = 0L,
+    val showPleaseWait: Boolean = false,
 ) : BaseViewState {
     val formattedDuration: String
         get() = durationMillis.formatAsDuration()

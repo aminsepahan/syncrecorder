@@ -2,14 +2,12 @@ package com.syn2core.syn2corecamera.presentation.ui.recording
 
 import android.view.Surface
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
 import com.syn2core.common.ui.base.BaseViewModel
 import com.syn2core.common.ui.livedata.SingleLiveData
 import com.syn2core.syn2corecamera.TAG
 import com.syn2core.syn2corecamera.business.usecase.setting.GetRecordingSettingsUseCase
 import com.syn2core.syn2corecamera.business.usecase.setting.SetRecordingSettingsUseCase
 import com.syn2core.syn2corecamera.domain.RecordingSettings
-import com.syn2core.syn2corecamera.domain.SensorSnapshot
 import com.syn2core.syn2corecamera.extension.getFramesFile
 import com.syn2core.syn2corecamera.extension.getImuFile
 import com.syn2core.syn2corecamera.extension.lastLine
@@ -149,8 +147,8 @@ class RecordingViewModel @Inject constructor(
         }
         progressCheck?.cancel()
         progressCheck = viewModelScope.launch {
-            while (isActive){
-                delay(2000L)
+            while (isActive) {
+                delay(500L)
                 checkIMUWritingProgress()
             }
         }
@@ -166,32 +164,20 @@ class RecordingViewModel @Inject constructor(
                 lastFrameLine.substring(index + 1).toLongOrNull() ?: return
             }
             val lastImu = it.getImuFile().lastLine ?: return
-            val lastImuTimeStamp = try {
-                Gson().fromJson(
-                    lastImu.dropLast(1),
-                    SensorSnapshot::class.java
-                ).timestamp
-            } catch (e: Exception) {
-                return
-            }
-            val firstFrameLine = it.getFramesFile()
-                .bufferedReader()
-                .useLines { lines ->
-                    lines.elementAtOrNull(2) ?: ""
-                }
-
-            index = firstFrameLine.indexOf(",")
-            val firstTimestamp = if (index == -1) {
+            index = lastImu.indexOf(",")
+            val lastImuTimeStamp = if (index == -1) {
                 return
             } else {
-                firstFrameLine.substring(index + 1).toLongOrNull() ?: return
+                lastImu.substring(0, index).toLongOrNull() ?: return
             }
-            val percent = ((lastImuTimeStamp - firstTimestamp) * 100 / (lastFrameTimestamp - firstTimestamp)).toInt()
+
+            val timestampDifference = (lastFrameTimestamp - lastImuTimeStamp) / 1_000_000
             updateState { state ->
                 state.copy(
-                    imuWritingPercent = percent,
+                    timestampDifference = timestampDifference,
                     latestImuTimestamp = lastImuTimeStamp / 1_000_000,
-                    latestFrameTimestamp = lastFrameTimestamp / 1_000_000
+                    latestFrameTimestamp = lastFrameTimestamp / 1_000_000,
+                    showPleaseWait = timestampDifference > 1000
                 )
             }
         }
