@@ -227,7 +227,10 @@ private fun RecordingScreenButtonsAndUi(
             if (viewState.isRecording) {
                 SegmentCountBadge(viewState.segmentCount)
             }
-            ImuWritingBadge(viewState.timestampDifference)
+            if (viewState.showPleaseWait) {
+                ImuWritingBadge(text = "Please wait")
+                ImuWritingBadge(text = "${viewState.timestampDifference}")
+            }
         }
     }
 }
@@ -376,12 +379,12 @@ private fun SegmentCountBadge(count: Int) {
 }
 
 @Composable
-private fun ImuWritingBadge(percent: Long) {
+private fun ImuWritingBadge(text: String) {
     Spacer(Modifier.width(2.dp))
     Text(
-        text = "$percent",
+        text = text,
         color = White,
-        style = MaterialTheme.typography.headlineSmall,
+        style = MaterialTheme.typography.bodyMedium,
         textAlign = TextAlign.Center,
         modifier = Modifier
             .height(60.dp)
