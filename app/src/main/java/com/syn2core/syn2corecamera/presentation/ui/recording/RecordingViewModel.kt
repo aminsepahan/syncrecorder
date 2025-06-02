@@ -133,6 +133,7 @@ class RecordingViewModel @Inject constructor(
             }
 
             effect.postValue(RecordingViewEffect.RecordingStopped)
+            cameraService.startPreview(cameraSurface!!)
         }
     }
 
