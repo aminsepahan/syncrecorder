@@ -10,7 +10,7 @@ fun File.getImuFile(): File = File(
     parentFile,
     name.replace(
         oldValue = ".mp4",
-        newValue = "_imu.json"
+        newValue = "_imu.txt"
     )
 )
 
