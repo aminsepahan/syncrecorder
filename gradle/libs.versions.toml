@@ -1,5 +1,5 @@
 [versions]
-agp = "8.12.0-alpha02"
+agp = "8.12.0-alpha03"
 camera-core = "1.4.2"
 gson = "2.13.1"
 kotlin = "2.1.21"

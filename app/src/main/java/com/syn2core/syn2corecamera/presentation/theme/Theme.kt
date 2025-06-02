@@ -35,7 +35,7 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun Syn2CoreCameraTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme

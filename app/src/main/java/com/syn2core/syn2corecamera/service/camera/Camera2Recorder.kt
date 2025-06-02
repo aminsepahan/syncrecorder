@@ -71,19 +71,24 @@ class Camera2Recorder @Inject constructor(
     }
 
     private fun createPreviewSession(surface: Surface) {
+        Timber.d("AAA########### createPreviewSession")
         cameraDevice?.createCaptureSession(
             listOf(surface),
             object : CameraCaptureSession.StateCallback() {
                 override fun onConfigured(session: CameraCaptureSession) {
+                    Timber.d("AAA########### onConfigured")
                     captureSession = session
                     val request =
                         cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
                             addTarget(surface)
                         }
+                    Timber.d("AAA########### createCaptureRequest")
                     session.setRepeatingRequest(request.build(), null, cameraHandler)
+                    Timber.d("AAA########### setRepeatingRequest")
                 }
 
                 override fun onConfigureFailed(session: CameraCaptureSession) {
+                    Timber.d("AAA########### onConfigureFailed")
                     Timber.e("Preview session configuration failed")
                 }
             },

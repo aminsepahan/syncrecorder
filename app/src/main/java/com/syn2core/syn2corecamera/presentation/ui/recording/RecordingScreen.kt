@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component3
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -161,7 +162,8 @@ private fun RecordingScreenButtonsAndUi(
 
         if (viewState.isRecording.not()) {
             DropdownSelector(
-                modifier = Modifier.align(Alignment.BottomEnd)
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
                     .padding(16.dp)
                     .padding(bottom = 10.dp)
                     .width(150.dp)
@@ -170,10 +172,21 @@ private fun RecordingScreenButtonsAndUi(
                         this.next = focusRequesterSettings
                         this.previous = focusRequesterRecord
                     }
-                    .onFocusChanged { focusedItem.value = Item.Resolution },
+                    .onFocusChanged { focusedItem.value = Item.Resolution }
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                DarkGray,
+                                DarkGray
+                            )
+                        ),
+                        alpha = 0.8f,
+                        shape = RoundedCornerShape(corner = CornerSize(10.dp))
+                    )
+                    .padding(10.dp),
                 label = "Resolution",
                 options = listOf("480p", "720p", "1080p", "4K"),
-                selectedOption = viewState.settingsState.resolution
+                selectedOption = viewState.settingsState.resolution,
             ) {
                 onResolutionSet(it)
             }

@@ -9,21 +9,22 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 class JsonFileWriter() {
-    private val gson = Gson()
+
     lateinit var file: File
 
     fun startNewFile(videoFile: File) {
         file = videoFile.getImuFile()
-        file.appendText("[")
     }
 
     fun appendJsonObject(jsonObject: SensorSnapshot) {
         CoroutineScope(Dispatchers.Default).launch {
-            file.appendText("${gson.toJson(jsonObject)},\n")
+            file.appendText(
+                "${jsonObject.timestamp}," +
+                        "${jsonObject.type}," +
+                        "${jsonObject.values[0]}," +
+                        "${jsonObject.values[1]}," +
+                        "${jsonObject.values[2]}\n"
+            )
         }
-    }
-
-    fun closeJsonArray() {
-        file.appendText("\n]")
     }
 }

@@ -23,10 +23,6 @@ class SensorDataAggregator @Inject constructor() {
         jsonFileWriter.appendJsonObject(snapshot)
     }
 
-    suspend fun closeJsonFile() = withContext(Dispatchers.IO) {
-        jsonFileWriter.closeJsonArray()
-    }
-
     fun startNewFile(currentVideoFile: File) {
         jsonFileWriter.startNewFile(currentVideoFile)
     }
