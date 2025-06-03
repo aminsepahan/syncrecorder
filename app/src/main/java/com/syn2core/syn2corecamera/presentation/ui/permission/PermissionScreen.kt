@@ -1,7 +1,5 @@
 package com.syn2core.syn2corecamera.presentation.ui.permission
 
-import android.content.Intent
-import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,10 +25,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.asFlow
-import com.syn2core.syn2corecamera.core.HComponentActivity
-import com.syn2core.syn2corecamera.navigation.Router
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.syn2core.syn2corecamera.navigation.Router
 
 @Composable
 fun PermissionScreen(
@@ -109,9 +106,6 @@ fun PermissionLayout(
 
             Button(
                 onClick = {
-                    val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                    HComponentActivity.currentActivity.startActivity(intent)
-
                     permissionsState.launchMultiplePermissionRequest()
                 },
                 shape = RoundedCornerShape(16.dp)

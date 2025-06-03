@@ -1,26 +1,37 @@
 package com.syn2core.syn2corecamera.extension
 
+import android.os.Environment
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.RandomAccessFile
 
 
-fun File.getImuFile(): File = File(
-    parentFile,
-    name.replace(
-        oldValue = ".mp4",
-        newValue = "_imu.txt"
+fun File.getImuFile(): File {
+    val downloadsDir = File(
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+        "syn2core"
     )
-)
+    if (!downloadsDir.exists()) downloadsDir.mkdirs()
 
-fun File.getFramesFile(): File = File(
-    parentFile,
-    name.replace(
-        oldValue = ".mp4",
-        newValue = "_ft.txt"
+    return File(
+        downloadsDir,
+        name.replace(".mp4", "_imu.txt")
     )
-)
+}
+
+fun File.getFramesFile(): File {
+    val downloadsDir = File(
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+        "syn2core"
+    )
+    if (!downloadsDir.exists()) downloadsDir.mkdirs()
+
+    return File(
+        downloadsDir,
+        name.replace(".mp4", "_ft.txt")
+    )
+}
 
 val File.lastLine: String?
     get() {
