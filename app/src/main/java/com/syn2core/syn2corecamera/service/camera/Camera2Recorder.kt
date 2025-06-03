@@ -1,6 +1,5 @@
 package com.syn2core.syn2corecamera.service.camera
 
-import FrameFileWriter
 import android.annotation.SuppressLint
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
@@ -13,9 +12,9 @@ import android.os.HandlerThread
 import android.view.Surface
 import com.syn2core.syn2corecamera.TAG
 import com.syn2core.syn2corecamera.domain.RecordingSettings
+import com.syn2core.syn2corecamera.service.writer.FrameFileWriter
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -29,6 +28,7 @@ import kotlin.coroutines.resumeWithException
 @Singleton
 class Camera2Recorder @Inject constructor(
     private val cameraManager: CameraManager,
+    private val frameFileWriter: FrameFileWriter,
 ) {
     private var cameraDevice: CameraDevice? = null
     private var mediaRecorder: MediaRecorder? = null
@@ -40,7 +40,6 @@ class Camera2Recorder @Inject constructor(
 
     private val cameraHandlerThread = HandlerThread("CameraBackground").apply { start() }
     private val cameraHandler = Handler(cameraHandlerThread.looper)
-    val frameFileWriter = FrameFileWriter()
 
     private val cameraId: String by lazy {
         cameraManager.cameraIdList.first {
@@ -218,6 +217,4 @@ class Camera2Recorder @Inject constructor(
         cameraDevice?.close()
         cameraDevice = null
     }
-
-
 }
