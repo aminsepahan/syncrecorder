@@ -16,7 +16,7 @@ class GetVideoFileUseCase @Inject constructor(
 
         val date = getFormattedDateUseCase()
         val time = getFormattedTimeUseCase()
-        val fileName = "${date}_${time}_${segmentCount}_s2c.mp4"
+        val fileName = "${date}_${time}_Part-${segmentCount}.mp4"
         return File(directory, fileName)
     }
 }
