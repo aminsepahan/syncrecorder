@@ -7,7 +7,7 @@ import javax.inject.Inject
 
 class GetFormattedTimeUseCase @Inject constructor() {
     operator fun invoke(): String {
-        val timeFormat = SimpleDateFormat("hh-mm", Locale.getDefault())
+        val timeFormat = SimpleDateFormat("hh-mm-ss", Locale.getDefault())
         return timeFormat.format(Date())
     }
 }

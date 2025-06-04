@@ -95,7 +95,7 @@ class RecordingViewModel @Inject constructor(
 
     fun startAll() {
         viewModelScope.launch {
-            val videoDirectory = "${getFormattedDateUseCase()} - ${getFormattedTimeUseCase()}"
+            val videoDirectory = "${getFormattedDateUseCase()}T${getFormattedTimeUseCase()}"
             val surface = cameraSurface
             if (surface == null) {
                 Timber.tag(TAG).w("🚫 Cannot start recording: Surface is null")
@@ -166,7 +166,7 @@ class RecordingViewModel @Inject constructor(
         progressCheck?.cancel()
         progressCheck = viewModelScope.launch {
             while (isActive) {
-                delay(500L)
+                delay(1000L)
                 checkIMUWritingProgress()
             }
         }

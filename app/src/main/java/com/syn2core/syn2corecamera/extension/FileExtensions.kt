@@ -9,10 +9,10 @@ import java.io.RandomAccessFile
 val File.getImuFile: File
     get() {
         val index = name.indexOf("P")
-        val frameName = name.substring(startIndex = 0, endIndex = index)
+        val imuName = name.substring(startIndex = 0, endIndex = index)
         return File(
             parentFile,
-            "${frameName}imu.txt"
+            "${imuName}imu.txt"
         )
     }
 
