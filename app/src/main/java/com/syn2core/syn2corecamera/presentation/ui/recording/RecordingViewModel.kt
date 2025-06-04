@@ -7,6 +7,8 @@ import com.syn2core.common.ui.livedata.SingleLiveData
 import com.syn2core.syn2corecamera.TAG
 import com.syn2core.syn2corecamera.business.usecase.setting.GetRecordingSettingsUseCase
 import com.syn2core.syn2corecamera.business.usecase.setting.SetRecordingSettingsUseCase
+import com.syn2core.syn2corecamera.business.usecase.time.GetFormattedDateUseCase
+import com.syn2core.syn2corecamera.business.usecase.time.GetFormattedTimeUseCase
 import com.syn2core.syn2corecamera.domain.RecordingSettings
 import com.syn2core.syn2corecamera.extension.getFramesFile
 import com.syn2core.syn2corecamera.extension.getImuFile
@@ -38,6 +40,8 @@ class RecordingViewModel @Inject constructor(
     private val setRecordingSettingsUseCase: SetRecordingSettingsUseCase,
     private val durationMillisService: DurationMillisService,
     private val cameraService: CameraService,
+    private val getFormattedDateUseCase: GetFormattedDateUseCase,
+    private val getFormattedTimeUseCase: GetFormattedTimeUseCase,
 ) : BaseViewModel<RecordingViewEvent>() {
 
     private val _state = MutableStateFlow(RecordingViewState())
@@ -91,6 +95,7 @@ class RecordingViewModel @Inject constructor(
 
     fun startAll() {
         viewModelScope.launch {
+            val videoDirectory = "${getFormattedDateUseCase()} - ${getFormattedTimeUseCase()}"
             val surface = cameraSurface
             if (surface == null) {
                 Timber.tag(TAG).w("🚫 Cannot start recording: Surface is null")
@@ -102,6 +107,7 @@ class RecordingViewModel @Inject constructor(
             currentVideoFile = cameraService.startRecordingAndSensors(
                 surface = surface,
                 recordingSettings = settings,
+                videoDirectory = videoDirectory,
             )
 
             durationMillisService.start(viewModelScope) { newDuration ->
@@ -112,7 +118,11 @@ class RecordingViewModel @Inject constructor(
                 }
             }
 
-            startAutoRestartLoop(surface, settings)
+            startAutoRestartLoop(
+                surface = surface,
+                settings = settings,
+                videoDirectory = videoDirectory
+            )
 
             updateState { it.copy(isRecording = true, durationMillis = 0L) }
             effect.postValue(RecordingViewEffect.RecordingStarted)
@@ -137,12 +147,19 @@ class RecordingViewModel @Inject constructor(
         }
     }
 
-    private fun startAutoRestartLoop(surface: Surface, settings: RecordingSettings) {
+    private fun startAutoRestartLoop(
+        surface: Surface,
+        settings: RecordingSettings,
+        videoDirectory: String
+    ) {
         autoRestartJob?.cancel()
         autoRestartJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
                 delay((settings.autoStopMinutes * 60 - 1) * 1000L)
-                segmentCount = cameraService.switchToNewSegment(surface = surface)
+                segmentCount = cameraService.switchToNewSegment(
+                    surface = surface,
+                    videoDirectory = videoDirectory
+                )
                 updateState { it.copy(segmentCount = segmentCount) }
             }
         }
@@ -157,14 +174,14 @@ class RecordingViewModel @Inject constructor(
 
     private fun checkIMUWritingProgress() {
         currentVideoFile?.let {
-            val lastFrameLine = it.getFramesFile().lastLine ?: return
+            val lastFrameLine = it.getFramesFile.lastLine ?: return
             var index = lastFrameLine.indexOf(",")
             val lastFrameTimestamp = if (index == -1) {
                 return
             } else {
                 lastFrameLine.substring(index + 1).toLongOrNull() ?: return
             }
-            val lastImu = it.getImuFile().lastLine ?: return
+            val lastImu = it.getImuFile.lastLine ?: return
             index = lastImu.indexOf(",")
             val lastImuTimeStamp = if (index == -1) {
                 return

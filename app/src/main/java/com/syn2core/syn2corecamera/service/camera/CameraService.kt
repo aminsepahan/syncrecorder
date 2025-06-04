@@ -25,10 +25,15 @@ class CameraService @Inject constructor(
     suspend fun startRecordingAndSensors(
         surface: Surface,
         recordingSettings: RecordingSettings,
+        videoDirectory: String,
     ): File {
         segmentCount = 0
         this.recordingSettings = recordingSettings
-        return startNewSegment(surface, recordingSettings)
+        return startNewSegment(
+            surface = surface,
+            recordingSettings = recordingSettings,
+            videoDirectory = videoDirectory
+        )
     }
 
     suspend fun stopRecordingAndSensors() {
@@ -39,9 +44,13 @@ class CameraService @Inject constructor(
     private suspend fun startNewSegment(
         surface: Surface,
         recordingSettings: RecordingSettings,
+        videoDirectory: String,
     ): File {
         segmentCount++
-        currentVideoFile = getVideoFileUseCase(segmentCount)
+        currentVideoFile = getVideoFileUseCase(
+            segmentCount = segmentCount,
+            videoDirectory = videoDirectory
+        )
 
         camera2Recorder.startRecording(
             surface = surface,
@@ -62,10 +71,15 @@ class CameraService @Inject constructor(
 
     suspend fun switchToNewSegment(
         surface: Surface,
+        videoDirectory: String,
     ): Int {
         sensorService.stopSensors()
         camera2Recorder.stopRecording()
-        startNewSegment(surface, recordingSettings!!)
+        startNewSegment(
+            surface = surface,
+            recordingSettings = recordingSettings!!,
+            videoDirectory = videoDirectory
+        )
         return segmentCount
     }
 

@@ -15,7 +15,7 @@ class FrameFileWriter @Inject constructor() {
 
     fun startNewSegment(segmentNumber: Int, videoFile: File) {
         if (segmentNumber == 1) {
-            file = videoFile.getFramesFile()
+            file = videoFile.getFramesFile
             file.appendText("frameNumber, frameTimestamp\n")
         }
         file.appendText("----- Segment $segmentNumber ---\n")

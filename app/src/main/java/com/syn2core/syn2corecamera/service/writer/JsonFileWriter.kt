@@ -15,7 +15,7 @@ class JsonFileWriter @Inject constructor() {
     lateinit var file: File
 
     fun startNewFile(videoFile: File) {
-        file = videoFile.getImuFile()
+        file = videoFile.getImuFile
         file.appendText("timestamp,type,x,y,z\n")
     }
 

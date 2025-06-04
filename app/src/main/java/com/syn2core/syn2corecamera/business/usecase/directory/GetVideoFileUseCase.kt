@@ -1,22 +1,23 @@
 package com.syn2core.syn2corecamera.business.usecase.directory
 
-import android.os.Environment
 import com.syn2core.syn2corecamera.business.usecase.time.GetFormattedDateUseCase
 import com.syn2core.syn2corecamera.business.usecase.time.GetFormattedTimeUseCase
+import com.syn2core.syn2corecamera.extension.syn2CoreDownloadsDir
 import java.io.File
 import javax.inject.Inject
 
 class GetVideoFileUseCase @Inject constructor(
-    private val getFormattedDateUseCase: GetFormattedDateUseCase,
     private val getFormattedTimeUseCase: GetFormattedTimeUseCase,
 ) {
-    operator fun invoke(segmentCount: Int): File {
-        val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES), "syn2core")
+    operator fun invoke(
+        videoDirectory: String,
+        segmentCount: Int
+    ): File {
+        val time = getFormattedTimeUseCase()
+        val directory = File(syn2CoreDownloadsDir, videoDirectory)
         if (!directory.exists()) directory.mkdirs()
 
-        val date = getFormattedDateUseCase()
-        val time = getFormattedTimeUseCase()
-        val fileName = "${date}_${time}_Part-${segmentCount}.mp4"
+        val fileName = "${time}_Part-${segmentCount}.mp4"
         return File(directory, fileName)
     }
 }

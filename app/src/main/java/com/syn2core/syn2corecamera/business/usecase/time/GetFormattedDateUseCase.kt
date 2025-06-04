@@ -7,7 +7,7 @@ import javax.inject.Inject
 
 class GetFormattedDateUseCase @Inject constructor() {
     operator fun invoke(): String {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val dateFormat = SimpleDateFormat("yy-MM-dd", Locale.getDefault())
         return dateFormat.format(Date())
     }
 }

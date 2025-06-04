@@ -6,24 +6,35 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.RandomAccessFile
 
-fun File.getImuFile(): File = File(
-    getSyn2CoreDownloadsDir(),
-    name.replace(".mp4", "_imu.txt")
-)
+val File.getImuFile: File
+    get() {
+        val index = name.indexOf("P")
+        val frameName = name.substring(startIndex = 0, endIndex = index)
+        return File(
+            parentFile,
+            "${frameName}imu.txt"
+        )
+    }
 
-fun File.getFramesFile(): File = File(
-    getSyn2CoreDownloadsDir(),
-    name.replace(".mp4", "_ft.txt")
-)
+val File.getFramesFile: File
+    get() {
+        val index = name.indexOf("P")
+        val frameName = name.substring(startIndex = 0, endIndex = index)
+        return File(
+            parentFile,
+            "${frameName}ft.txt"
+        )
+    }
 
-private fun getSyn2CoreDownloadsDir(): File {
-    val downloadsDir = File(
-        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-        "syn2core"
-    )
-    if (!downloadsDir.exists()) downloadsDir.mkdirs()
-    return downloadsDir
-}
+val syn2CoreDownloadsDir: File
+    get() {
+        val downloadsDir = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            "syn2core"
+        )
+        if (!downloadsDir.exists()) downloadsDir.mkdirs()
+        return downloadsDir
+    }
 
 
 val File.lastLine: String?
