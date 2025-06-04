@@ -172,13 +172,13 @@ class RecordingViewModel @Inject constructor(
                 lastImu.substring(0, index).toLongOrNull() ?: return
             }
 
-            val timestampDifference = (lastFrameTimestamp - lastImuTimeStamp) / 1_000_000
+            val timestampDifference = (lastFrameTimestamp - lastImuTimeStamp) / 1_000_000_000
             updateState { state ->
                 state.copy(
                     timestampDifference = timestampDifference,
                     latestImuTimestamp = lastImuTimeStamp / 1_000_000,
                     latestFrameTimestamp = lastFrameTimestamp / 1_000_000,
-                    showPleaseWait = timestampDifference > 1000
+                    showPleaseWait = timestampDifference > 1
                 )
             }
         }

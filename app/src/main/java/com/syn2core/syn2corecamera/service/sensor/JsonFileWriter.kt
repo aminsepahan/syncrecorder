@@ -14,6 +14,7 @@ class JsonFileWriter() {
 
     fun startNewFile(videoFile: File) {
         file = videoFile.getImuFile()
+        file.appendText("timestamp,type,x,y,z\n")
     }
 
     fun appendJsonObject(jsonObject: SensorSnapshot) {
