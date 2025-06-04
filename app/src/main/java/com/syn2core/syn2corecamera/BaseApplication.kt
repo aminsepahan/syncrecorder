@@ -4,7 +4,7 @@ import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 
-const val TAG = "SYNCRECORDER"
+const val TAG = "SYN2CORE"
 
 @HiltAndroidApp
 class BaseApplication : Application() {

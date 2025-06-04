@@ -18,7 +18,6 @@ class CameraService @Inject constructor(
     private var segmentCount = 0
     private var recordingSettings: RecordingSettings? = null
 
-
     fun startPreview(surface: Surface) {
         camera2Recorder.startPreview(surface)
     }

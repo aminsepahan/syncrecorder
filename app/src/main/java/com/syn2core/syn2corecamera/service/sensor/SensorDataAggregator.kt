@@ -2,16 +2,15 @@ package com.syn2core.syn2corecamera.service.sensor
 
 import android.hardware.SensorEvent
 import com.syn2core.syn2corecamera.domain.SensorSnapshot
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.syn2core.syn2corecamera.service.writer.JsonFileWriter
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class SensorDataAggregator @Inject constructor() {
-    private val jsonFileWriter = JsonFileWriter()
-
+class SensorDataAggregator @Inject constructor(
+    private val jsonFileWriter: JsonFileWriter,
+) {
     fun recordEvent(type: Int, name: String, event: SensorEvent) {
 
         val snapshot = SensorSnapshot(

@@ -28,7 +28,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -113,7 +112,6 @@ fun RecordingLayout(
     viewModel: RecordingViewModel,
     onEventHandler: (RecordingViewEvent) -> Unit,
 ) {
-
     val context = LocalContext.current
     Box(modifier = Modifier.fillMaxSize()) {
         val resolution = viewState.settingsState.getResolutionSize()
@@ -151,7 +149,6 @@ fun RecordingLayout(
                 )
             }
         )
-
     }
 }
 
@@ -162,7 +159,6 @@ private fun RecordingScreenButtonsAndUi(
     onRecordButtonClick: () -> Unit = {},
     onResolutionSet: (String) -> Unit = {}
 ) {
-
     val (focusRequesterRecord, focusRequesterSettings, focusRequesterResolution) = remember { FocusRequester.createRefs() }
     val focusedItem = remember { mutableStateOf(Item.Record) }
     LaunchedEffect(Unit) {

@@ -1,14 +1,16 @@
-package com.syn2core.syn2corecamera.service.sensor
+package com.syn2core.syn2corecamera.service.writer
 
-import com.google.gson.Gson
 import com.syn2core.syn2corecamera.domain.SensorSnapshot
 import com.syn2core.syn2corecamera.extension.getImuFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class JsonFileWriter() {
+@Singleton
+class JsonFileWriter @Inject constructor() {
 
     lateinit var file: File
 
