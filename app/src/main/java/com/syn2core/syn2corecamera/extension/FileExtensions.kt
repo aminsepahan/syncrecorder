@@ -1,5 +1,7 @@
 package com.syn2core.syn2corecamera.extension
 
+import android.annotation.SuppressLint
+import android.os.Build
 import android.os.Environment
 import java.io.File
 import java.io.FileNotFoundException
@@ -27,10 +29,11 @@ val File.getFramesFile: File
     }
 
 val syn2CoreDownloadsDir: File
+    @SuppressLint("HardwareIds")
     get() {
         val downloadsDir = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-            "syn2core"
+            "syn2core/${Build.MANUFACTURER}-${Build.DEVICE}-${Build.SERIAL}"
         )
         if (!downloadsDir.exists()) downloadsDir.mkdirs()
         return downloadsDir

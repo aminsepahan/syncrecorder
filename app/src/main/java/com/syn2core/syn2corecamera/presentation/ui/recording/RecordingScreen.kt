@@ -235,7 +235,7 @@ private fun RecordingScreenButtonsAndUi(
                 onRecordButtonClick()
             }
 
-            if (viewState.isRecording) {
+            if (viewState.isRecording && viewState.segmentCount > 0) {
                 SegmentCountBadge(viewState.segmentCount)
             }
             if (viewState.showPleaseWait) {
