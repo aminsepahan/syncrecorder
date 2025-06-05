@@ -59,7 +59,6 @@ class CameraService @Inject constructor(
             onStartSensor = {
                 sensorService.startSensors(
                     imuFrequency = recordingSettings.getImuSensorDelay(),
-                    segmentNumber = segmentCount,
                     currentVideoFile = currentVideoFile!!
                 )
             },

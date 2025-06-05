@@ -12,12 +12,9 @@ class SensorService @Inject constructor(
 ) {
     fun startSensors(
         imuFrequency: Int,
-        segmentNumber: Int,
         currentVideoFile: File
     ) {
-        if (segmentNumber == 1) {
-            aggregator.startNewFile(currentVideoFile)
-        }
+        aggregator.startNewFile(currentVideoFile)
         unifiedSensorService.startSensors(imuFrequency = imuFrequency)
     }
 

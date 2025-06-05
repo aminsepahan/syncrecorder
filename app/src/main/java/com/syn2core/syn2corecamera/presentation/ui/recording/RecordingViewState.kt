@@ -13,7 +13,7 @@ data class RecordingViewState(
     val isRecording: Boolean = false,
     val durationMillis: Long = 0L,
     val settingsState: RecordingSettings = RecordingSettings(),
-    val segmentCount: Int = 1,
+    val segmentCount: Int = 0,
     val timestampDifference: Long = 0,
     val latestFrameTimestamp: Long = 0L,
     val latestImuTimestamp: Long = 0L,

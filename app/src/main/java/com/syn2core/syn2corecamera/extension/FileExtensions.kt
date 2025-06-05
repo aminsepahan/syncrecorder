@@ -10,21 +10,17 @@ import java.io.RandomAccessFile
 
 val File.getImuFile: File
     get() {
-        val index = name.indexOf("P")
-        val imuName = name.substring(startIndex = 0, endIndex = index)
         return File(
             parentFile,
-            "${imuName}imu.txt"
+            name.replace(".mp4", "_imu.txt")
         )
     }
 
 val File.getFramesFile: File
     get() {
-        val index = name.indexOf("P")
-        val frameName = name.substring(startIndex = 0, endIndex = index)
         return File(
             parentFile,
-            "${frameName}ft.txt"
+            name.replace(".mp4", "_ft.txt")
         )
     }
 

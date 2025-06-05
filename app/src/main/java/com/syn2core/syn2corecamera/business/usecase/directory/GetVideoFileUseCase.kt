@@ -14,10 +14,10 @@ class GetVideoFileUseCase @Inject constructor(
         segmentCount: Int
     ): File {
         val time = getFormattedTimeUseCase()
-        val directory = File(syn2CoreDownloadsDir, videoDirectory)
+        val directory = File(syn2CoreDownloadsDir, "$videoDirectory/part-$segmentCount - ${time}")
         if (!directory.exists()) directory.mkdirs()
 
-        val fileName = "${time}_Part-${segmentCount}.mp4"
+        val fileName = "Part-${segmentCount}.mp4"
         return File(directory, fileName)
     }
 }

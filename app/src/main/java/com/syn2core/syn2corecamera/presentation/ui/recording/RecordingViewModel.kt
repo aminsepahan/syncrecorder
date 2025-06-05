@@ -10,8 +10,6 @@ import com.syn2core.syn2corecamera.business.usecase.setting.SetRecordingSettings
 import com.syn2core.syn2corecamera.business.usecase.time.GetFormattedDateUseCase
 import com.syn2core.syn2corecamera.business.usecase.time.GetFormattedTimeUseCase
 import com.syn2core.syn2corecamera.domain.RecordingSettings
-import com.syn2core.syn2corecamera.extension.getFramesFile
-import com.syn2core.syn2corecamera.extension.getImuFile
 import com.syn2core.syn2corecamera.extension.lastLine
 import com.syn2core.syn2corecamera.service.camera.CameraService
 import com.syn2core.syn2corecamera.service.durationmillis.DurationMillisService
@@ -124,7 +122,13 @@ class RecordingViewModel @Inject constructor(
                 videoDirectory = videoDirectory
             )
 
-            updateState { it.copy(isRecording = true, durationMillis = 0L) }
+            updateState {
+                it.copy(
+                    isRecording = true,
+                    durationMillis = 0L,
+                    segmentCount = 1
+                )
+            }
             effect.postValue(RecordingViewEffect.RecordingStarted)
         }
     }
@@ -167,27 +171,38 @@ class RecordingViewModel @Inject constructor(
         progressCheck?.cancel()
         progressCheck = viewModelScope.launch {
             while (isActive) {
-                delay(1000L)
+                delay(7000L)
                 checkIMUWritingProgress()
             }
         }
     }
 
     private fun checkIMUWritingProgress() {
-        currentVideoFile?.let {
-            val lastFrameLine = it.getFramesFile.lastLine ?: return
+        currentVideoFile?.let { videoFile ->
+            val lastFrameLine = videoFile.parentFile?.parentFile?.listFiles()?.maxByOrNull {
+                it.name
+            }?.listFiles {
+                it.name.contains("ft")
+            }?.first()?.lastLine ?: return
             var index = lastFrameLine.indexOf(",")
             val lastFrameTimestamp = if (index == -1) {
                 return
             } else {
                 lastFrameLine.substring(index + 1).toLongOrNull() ?: return
             }
-            val lastImu = it.getImuFile.lastLine ?: return
-            index = lastImu.indexOf(",")
+            val lastImuFile = videoFile.parentFile?.parentFile?.listFiles {
+                it.isDirectory
+                        && it.listFiles()?.any { file ->
+                    file.name.contains("imu")
+                } == true
+            }?.takeIf { it.isNotEmpty() }?.last()?.listFiles()?.first {
+                it.name.contains("imu")
+            }?.lastLine ?: return
+            index = lastImuFile.indexOf(",")
             val lastImuTimeStamp = if (index == -1) {
                 return
             } else {
-                lastImu.substring(0, index).toLongOrNull() ?: return
+                lastImuFile.substring(0, index).toLongOrNull() ?: return
             }
 
             val timestampDifference = (lastFrameTimestamp - lastImuTimeStamp) / 1_000_000_000
@@ -196,7 +211,7 @@ class RecordingViewModel @Inject constructor(
                     timestampDifference = timestampDifference,
                     latestImuTimestamp = lastImuTimeStamp / 1_000_000,
                     latestFrameTimestamp = lastFrameTimestamp / 1_000_000,
-                    showPleaseWait = timestampDifference > 1
+                    showPleaseWait = timestampDifference >= 1
                 )
             }
         }
