@@ -98,9 +98,12 @@ class Camera2Recorder @Inject constructor(
         onStartSensor: () -> Unit,
         segmentCount: Int,
     ) {
-        frameFileWriter.startNewSegment(segmentCount, outputFile)
+        frameFileWriter.startNewSegment(outputFile)
 
-        setupMediaRecorder(outputFile, settings)
+        setupMediaRecorder(
+            file = outputFile,
+            settings = settings
+        )
 
         this.outputFile = outputFile
 

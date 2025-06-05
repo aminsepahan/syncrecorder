@@ -13,11 +13,10 @@ class FrameFileWriter @Inject constructor() {
 
     lateinit var file: File
 
-    fun startNewSegment(segmentNumber: Int, videoFile: File) {
+    fun startNewSegment(videoFile: File) {
         CoroutineScope(Dispatchers.IO).launch {
             file = videoFile.getFramesFile
             file.appendText("frameNumber, frameTimestamp\n")
-            file.appendText("----- Segment $segmentNumber ---\n")
         }
     }
 
