@@ -160,7 +160,7 @@ class RecordingViewModel @Inject constructor(
         autoRestartJob?.cancel()
         autoRestartJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
-                delay((settings.autoStopMinutes * 60 - 1) * 1000L)
+                delay(settings.autoStopMinutes * 60 * 1000L)
                 segmentCount = cameraService.switchToNewSegment(
                     surface = surface,
                     videoDirectory = videoDirectory
@@ -171,7 +171,7 @@ class RecordingViewModel @Inject constructor(
         progressCheck?.cancel()
         progressCheck = viewModelScope.launch {
             while (isActive) {
-                delay(7000L)
+                delay(1000L)
                 checkIMUWritingProgress()
             }
         }
@@ -191,11 +191,12 @@ class RecordingViewModel @Inject constructor(
                 lastFrameLine.substring(index + 1).toLongOrNull() ?: return
             }
             val lastImuFile = videoFile.parentFile?.parentFile?.listFiles {
-                it.isDirectory
-                        && it.listFiles()?.any { file ->
+                it.isDirectory && it.listFiles()?.any { file ->
                     file.name.contains("imu")
                 } == true
-            }?.takeIf { it.isNotEmpty() }?.last()?.listFiles()?.first {
+            }?.maxByOrNull {
+                it.name
+            }?.listFiles()?.first {
                 it.name.contains("imu")
             }?.lastLine ?: return
             index = lastImuFile.indexOf(",")

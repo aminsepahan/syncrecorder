@@ -13,9 +13,13 @@ import javax.inject.Singleton
 class JsonFileWriter @Inject constructor() {
 
     lateinit var file: File
+    var cashString = ""
+    var counter = 0
 
     fun startNewFile(videoFile: File) {
         CoroutineScope(Dispatchers.Default).launch {
+            cashString = ""
+            counter = 0
             file = videoFile.getImuFile
             file.appendText("timestamp,type,x,y,z\n")
         }
@@ -23,13 +27,20 @@ class JsonFileWriter @Inject constructor() {
 
     fun appendJsonObject(jsonObject: SensorSnapshot) {
         CoroutineScope(Dispatchers.Default).launch {
-            file.appendText(
-                "${jsonObject.timestamp}," +
-                        "${jsonObject.type}," +
-                        "${jsonObject.values[0]}," +
-                        "${jsonObject.values[1]}," +
-                        "${jsonObject.values[2]}\n"
-            )
+            cashString = cashString +
+                    "${jsonObject.timestamp}," +
+                    "${jsonObject.type}," +
+                    "${jsonObject.values[0]}," +
+                    "${jsonObject.values[1]}," +
+                    "${jsonObject.values[2]}\n"
+
+            if (counter < 50) {
+                counter++
+            } else {
+                file.appendText(cashString)
+                cashString = ""
+                counter = 0
+            }
         }
     }
 }
