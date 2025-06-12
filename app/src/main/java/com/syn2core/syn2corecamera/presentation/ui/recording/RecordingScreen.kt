@@ -305,6 +305,11 @@ fun BoxScope.SettingsPreview(viewState: RecordingViewState) {
             color = White
         )
         Text(
+            text = "Audio src: ${viewState.settingsState.audioSource}",
+            style = MaterialTheme.typography.bodySmall,
+            color = White
+        )
+        Text(
             text = "Rsolution: ${viewState.settingsState.resolution}",
             style = MaterialTheme.typography.bodySmall,
             color = White

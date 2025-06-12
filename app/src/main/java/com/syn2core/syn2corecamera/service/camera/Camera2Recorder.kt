@@ -170,6 +170,7 @@ class Camera2Recorder @Inject constructor(
             val (width, height) = settings.getResolutionSize()
             mediaRecorder = MediaRecorder().apply {
                 setAudioSource(settings.getAudioSource())
+                setAudioChannels(2)
                 setAudioSamplingRate(96000)
                 setVideoSource(MediaRecorder.VideoSource.SURFACE)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)

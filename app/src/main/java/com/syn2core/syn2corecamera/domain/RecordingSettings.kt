@@ -34,6 +34,7 @@ data class RecordingSettings(
         "MIC" -> MediaRecorder.AudioSource.MIC
         "CAMCORDER" -> MediaRecorder.AudioSource.CAMCORDER
         "VOICE_RECOGNITION" -> MediaRecorder.AudioSource.VOICE_RECOGNITION
+        "UN_PROCESSED" -> MediaRecorder.AudioSource.UNPROCESSED
         else -> MediaRecorder.AudioSource.CAMCORDER
     }
 

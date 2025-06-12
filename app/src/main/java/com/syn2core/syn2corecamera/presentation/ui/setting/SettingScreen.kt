@@ -112,7 +112,7 @@ fun SettingLayout(
                 Column(modifier = Modifier.weight(1f)) {
                     DropdownSelector(
                         label = "Audio Source",
-                        options = listOf("MIC", "CAMCORDER", "VOICE_RECOGNITION"),
+                        options = listOf("MIC", "CAMCORDER", "VOICE_RECOGNITION", "UN_PROCESSED"),
                         selectedOption = audioSource
                     ) {
                         audioSource = it
