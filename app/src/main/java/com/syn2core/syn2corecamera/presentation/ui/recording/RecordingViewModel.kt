@@ -88,6 +88,14 @@ class RecordingViewModel @Inject constructor(
                 }
                 updateState { it.copy(settingsState = event.setting) }
             }
+
+            RecordingViewEvent.ToggleStreaming -> {
+                if (_state.value.isStreaming) {
+                    updateState { it.copy(isStreaming = false) }
+                } else {
+                    updateState { it.copy(isStreaming = true) }
+                }
+            }
         }
     }
 

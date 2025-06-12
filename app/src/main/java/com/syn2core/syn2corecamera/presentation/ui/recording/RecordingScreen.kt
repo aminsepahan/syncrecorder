@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Stop
@@ -41,7 +42,6 @@ import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component3
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component4
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component5
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -66,6 +66,7 @@ import com.syn2core.syn2corecamera.presentation.theme.DarkGray
 import com.syn2core.syn2corecamera.presentation.theme.ErrorColor
 import com.syn2core.syn2corecamera.presentation.theme.ErrorColorAlpha
 import com.syn2core.syn2corecamera.presentation.theme.ErrorDark
+import com.syn2core.syn2corecamera.presentation.theme.StreamColor
 import kotlinx.coroutines.delay
 
 @Composable
@@ -173,6 +174,11 @@ fun RecordingLayout(
                         )
                     )
                 }
+            },
+            onStreamButtonClick = {
+                onEventHandler(
+                    RecordingViewEvent.ToggleStreaming
+                )
             }
         )
     }
@@ -183,12 +189,13 @@ private fun RecordingScreenButtonsAndUi(
     viewState: RecordingViewState,
     onEventHandler: (RecordingViewEvent) -> Unit,
     onRecordButtonClick: () -> Unit = {},
+    onStreamButtonClick: () -> Unit = {},
     onResolutionSet: (String) -> Unit = {},
     shouldShowDialog: Boolean,
     onDismissRequest: () -> Unit,
     onConfirmation: () -> Unit
 ) {
-    val (focusRequesterRecord, focusRequesterSettings, focusRequesterResolution, dialogCancel, dialogConfirm) = remember { FocusRequester.createRefs() }
+    val (focusRequesterRecord, focusRequesterSettings, focusRequesterResolution, focusRequesterStream) = remember { FocusRequester.createRefs() }
     val focusedItem = remember { mutableStateOf(Item.Record) }
     LaunchedEffect(Unit) {
         focusRequesterRecord.requestFocus()
@@ -237,7 +244,7 @@ private fun RecordingScreenButtonsAndUi(
                 .align(Alignment.BottomStart)
                 .padding(start = 26.dp, bottom = 26.dp)
         ) {
-            if (viewState.isRecording.not()) {
+            if (viewState.isRecording.not() && viewState.isStreaming.not()) {
                 FocusableIconButton(
                     icon = Icons.Default.Settings,
                     focusRequester = focusRequesterSettings,
@@ -252,25 +259,44 @@ private fun RecordingScreenButtonsAndUi(
 
             Spacer(Modifier.width(10.dp))
 
-            FocusableIconButton(
-                icon = if (viewState.isRecording) Icons.Default.Stop else Icons.Default.FiberManualRecord,
-                focusRequester = focusRequesterRecord,
-                next = focusRequesterSettings,
-                previous = focusRequesterSettings,
-                focusedItem = focusedItem,
-                item = Item.Record,
-                backgroundColor = ErrorColor
-            ) {
-                onRecordButtonClick()
+            if (viewState.isStreaming.not()) {
+
+                FocusableIconButton(
+                    icon = if (viewState.isRecording) Icons.Default.Stop else Icons.Default.FiberManualRecord,
+                    focusRequester = focusRequesterRecord,
+                    next = focusRequesterSettings,
+                    previous = focusRequesterSettings,
+                    focusedItem = focusedItem,
+                    item = Item.Record,
+                    backgroundColor = ErrorColor
+                ) {
+                    onRecordButtonClick()
+                }
+                if (viewState.isRecording && viewState.segmentCount > 0) {
+                    SegmentCountBadge(viewState.segmentCount)
+                }
+                if (viewState.showPleaseWait) {
+                    ImuWritingBadge(text = "Please wait")
+                    ImuWritingBadge(text = "${viewState.timestampDifference}")
+                }
             }
 
-            if (viewState.isRecording && viewState.segmentCount > 0) {
-                SegmentCountBadge(viewState.segmentCount)
+
+            Spacer(Modifier.width(10.dp))
+            if (viewState.isRecording.not()) {
+                FocusableIconButton(
+                    icon = if (viewState.isStreaming) Icons.Default.Stop else Icons.Default.Computer,
+                    focusRequester = focusRequesterStream,
+                    next = focusRequesterSettings,
+                    previous = focusRequesterRecord,
+                    focusedItem = focusedItem,
+                    item = Item.Stream,
+                    backgroundColor = StreamColor
+                ) {
+                    onStreamButtonClick()
+                }
             }
-            if (viewState.showPleaseWait) {
-                ImuWritingBadge(text = "Please wait")
-                ImuWritingBadge(text = "${viewState.timestampDifference}")
-            }
+
         }
     }
     if (shouldShowDialog) {
@@ -498,7 +524,8 @@ fun RecordScreenPreview() {
         onEventHandler = {},
         shouldShowDialog = false,
         onDismissRequest = {},
-        onConfirmation = {}
+        onConfirmation = {},
+        onRecordButtonClick = {}
     )
 }
 
@@ -510,13 +537,14 @@ fun RecordScreenPreviewWithDialog() {
         onEventHandler = {},
         shouldShowDialog = true,
         onDismissRequest = {},
-        onConfirmation = {}
+        onConfirmation = {},
+        onRecordButtonClick = {}
     )
 }
 
 @Preview(heightDp = 360, widthDp = 640)
 @Composable
-fun RecordScreenPreviewRecrding() {
+fun RecordScreenPreviewRecording() {
     RecordingScreenButtonsAndUi(
         viewState = RecordingViewState().copy(
             isRecording = true,
@@ -526,7 +554,26 @@ fun RecordScreenPreviewRecrding() {
         onEventHandler = {},
         shouldShowDialog = false,
         onDismissRequest = {},
-        onConfirmation = {}
+        onConfirmation = {},
+        onRecordButtonClick = {}
+    )
+}
+
+@Preview(heightDp = 360, widthDp = 640)
+@Composable
+fun RecordScreenPreviewStreaming() {
+    RecordingScreenButtonsAndUi(
+        viewState = RecordingViewState().copy(
+            isRecording = false,
+            durationMillis = 125000,
+            segmentCount = 3,
+            isStreaming = true
+        ),
+        onEventHandler = {},
+        shouldShowDialog = false,
+        onDismissRequest = {},
+        onConfirmation = {},
+        onRecordButtonClick = {}
     )
 }
 
@@ -534,6 +581,5 @@ enum class Item {
     Record,
     Setting,
     Resolution,
-    DialogCancel,
-    DialogConfirm
+    Stream,
 }

@@ -14,6 +14,7 @@ val OnBackgroundColor = Color(0xFF121212)
 val SurfaceColor = Color(0xFFFFFFFF)
 val OnSurfaceColor = Color(0xFF212121)
 
+val StreamColor = Color(0xFFFFC107)
 val ErrorColor = PrimaryColor
 val OnErrorColor = OnPrimaryColor
 

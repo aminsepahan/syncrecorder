@@ -17,5 +17,6 @@ sealed class RecordingViewEvent : BaseViewEvent {
     ) : RecordingViewEvent()
     object NavigateToSettings : RecordingViewEvent()
     object LoadSettings : RecordingViewEvent()
+    object ToggleStreaming : RecordingViewEvent()
     data class SetResolution(val setting: RecordingSettings) : RecordingViewEvent()
 }

@@ -11,6 +11,7 @@ import com.syn2core.syn2corecamera.extension.formatAsDuration
 
 data class RecordingViewState(
     val isRecording: Boolean = false,
+    val isStreaming: Boolean = false,
     val durationMillis: Long = 0L,
     val settingsState: RecordingSettings = RecordingSettings(),
     val segmentCount: Int = 0,
