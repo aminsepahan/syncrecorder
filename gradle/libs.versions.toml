@@ -22,6 +22,7 @@ navigationCompose = "2.9.0"
 workRuntimeKtx = "2.10.1"
 datastorePreferences = "1.1.7"
 uiTooling = "1.8.2"
+webRTC = "125.6422.07"
 
 [libraries]
 androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "camera-core" }
@@ -37,6 +38,7 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+webrtc = { module = "io.github.webrtc-sdk:android", version.ref = "webRTC" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }

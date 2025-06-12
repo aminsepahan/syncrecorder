@@ -104,4 +104,7 @@ dependencies {
 
     //==================== Gson ====================
     implementation(libs.gson)
+
+    //==================== WebRTC ====================
+    implementation(libs.webrtc)
 }
