@@ -10,6 +10,8 @@ import com.syn2core.syn2corecamera.business.usecase.setting.GetRecordingSettings
 import com.syn2core.syn2corecamera.business.usecase.setting.SetRecordingSettingsUseCase
 import com.syn2core.syn2corecamera.business.usecase.time.GetFormattedDateUseCase
 import com.syn2core.syn2corecamera.business.usecase.time.GetFormattedTimeUseCase
+import com.syn2core.syn2corecamera.data.network.Sdp
+import com.syn2core.syn2corecamera.data.network.WebRTCApiService
 import com.syn2core.syn2corecamera.domain.RecordingSettings
 import com.syn2core.syn2corecamera.extension.lastLine
 import com.syn2core.syn2corecamera.service.camera.CameraService
@@ -26,6 +28,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import org.webrtc.DataChannel
 import org.webrtc.IceCandidate
 import org.webrtc.MediaStream
@@ -51,6 +54,8 @@ class RecordingViewModel @Inject constructor(
     private val cameraService: CameraService,
     private val getFormattedDateUseCase: GetFormattedDateUseCase,
     private val getFormattedTimeUseCase: GetFormattedTimeUseCase,
+    private val rtcClient: WebRTCClient,
+    private val webRTCApiService: WebRTCApiService
 ) : BaseViewModel<RecordingViewEvent>() {
 
     val timber = Timber.tag("RecordingViewModel")
@@ -63,7 +68,6 @@ class RecordingViewModel @Inject constructor(
     private var autoRestartJob: Job? = null
     private var progressCheck: Job? = null
     private var segmentCount: Int = 0
-    private lateinit var rtcClient: WebRTCClient
 
     private var currentVideoFile: File? = null
 
@@ -104,7 +108,7 @@ class RecordingViewModel @Inject constructor(
 
             RecordingViewEvent.ToggleStreaming -> {
                 if (_state.value.isStreaming) {
-                    updateState { it.copy(isStreaming = false) }
+                    stopAll()
                 } else {
                     startStreaming()
                     updateState { it.copy(isStreaming = true) }
@@ -116,76 +120,102 @@ class RecordingViewModel @Inject constructor(
     private fun startStreaming() {
 
         viewModelScope.launch {
-            rtcClient = WebRTCClient(
-                object : PeerConnectionObserver() {
-                    override fun onIceCandidate(p0: IceCandidate?) {
-                        super.onIceCandidate(p0)
-//                    signallingClient.sendIceCandidate(p0, isJoin)
-                        rtcClient.addIceCandidate(p0)
-                    }
-
-                    override fun onAddStream(p0: MediaStream?) {
-                        super.onAddStream(p0)
-                        timber.d("onAddStream: $p0")
-//                    p0?.videoTracks?.get(0)?.addSink(remote_view)
-                    }
-
-                    override fun onIceConnectionChange(p0: PeerConnection.IceConnectionState?) {
-                        timber.d("onIceConnectionChange: $p0")
-                    }
-
-                    override fun onIceConnectionReceivingChange(p0: Boolean) {
-                        timber.d("onIceConnectionReceivingChange: $p0")
-                    }
-
-                    override fun onConnectionChange(newState: PeerConnection.PeerConnectionState?) {
-                        timber.d("onConnectionChange: $newState")
-                    }
-
-                    override fun onDataChannel(p0: DataChannel?) {
-                        timber.d("onDataChannel: $p0")
-                    }
-
-                    override fun onStandardizedIceConnectionChange(newState: PeerConnection.IceConnectionState?) {
-                        timber.d("onStandardizedIceConnectionChange: $newState")
-                    }
-
-                    override fun onAddTrack(p0: RtpReceiver?, p1: Array<out MediaStream>?) {
-                        timber.d("onAddTrack: $p0 \n $p1")
-                    }
-
-                    override fun onTrack(transceiver: RtpTransceiver?) {
-                        timber.d("onTrack: $transceiver")
-                    }
-                }
-            )
-            rtcClient.initialize(BaseApplication.appContext)
+            initWebRtcClient()
             val webRtcSurface = rtcClient.createWebRTCSurface()
-            cameraService.startStreaming(
-                previewSurface = cameraSurface!!,
-                webRtcSurface = webRtcSurface,
-                settings = getRecordingSettingsUseCase()
-            )
             rtcClient.call(object : SdpObserver {
                 override fun onCreateSuccess(p0: SessionDescription?) {
                     timber.d("onCreateSuccess p0 : $p0")
+                    val sdp = Sdp(
+                        type = "offer",
+                        sdp = p0?.description
+                    )
+                    val json = Json.encodeToString(sdp)
+                    timber.d("onCreateSuccess $json")
+                    viewModelScope.launch {
+                        val answer = webRTCApiService.getWebRtcAnswerBasedOnOffer(
+                            offer = json,
+                            meetingId = "123456"
+                        )
+                        rtcClient.onRemoteSessionReceived(
+                            SessionDescription(
+                                SessionDescription.Type.ANSWER,
+                                answer.sdp
+                            )
+                        )
+                        cameraService.startStreaming(
+                            previewSurface = cameraSurface!!,
+                            webRtcSurface = webRtcSurface,
+                            settings = getRecordingSettingsUseCase()
+                        )
+                    }
+
                 }
 
                 override fun onSetSuccess() {
-
+                    timber.d("onSetSuccess p0")
                 }
 
                 override fun onCreateFailure(p0: String?) {
 
+                    timber.d("onCreateFailure p0 : $p0")
                 }
 
                 override fun onSetFailure(p0: String?) {
 
+                    timber.d("onSetFailure p0 : $p0")
                 }
 
             }, "12345")
         }
 
+    }
+
+    private fun initWebRtcClient() {
+        rtcClient.initialize(BaseApplication.appContext, object : PeerConnectionObserver() {
+            override fun onIceGatheringChange(p0: PeerConnection.IceGatheringState?) {
+                super.onIceGatheringChange(p0)
+                timber.d("onIceGatheringChange p0 : $p0")
+            }
+            override fun onIceCandidate(p0: IceCandidate?) {
+                super.onIceCandidate(p0)
+                timber.d("onIceCandidate: $p0")
+                rtcClient.addIceCandidate(p0)
+            }
+
+            override fun onAddStream(p0: MediaStream?) {
+                super.onAddStream(p0)
+                timber.d("onAddStream: $p0")
+                //                    p0?.videoTracks?.get(0)?.addSink(remote_view)
+            }
+
+            override fun onIceConnectionChange(p0: PeerConnection.IceConnectionState?) {
+                timber.d("onIceConnectionChange: $p0")
+            }
+
+            override fun onIceConnectionReceivingChange(p0: Boolean) {
+                timber.d("onIceConnectionReceivingChange: $p0")
+            }
+
+            override fun onConnectionChange(newState: PeerConnection.PeerConnectionState?) {
+                timber.d("onConnectionChange: $newState")
+            }
+
+            override fun onDataChannel(p0: DataChannel?) {
+                timber.d("onDataChannel: $p0")
+            }
+
+            override fun onStandardizedIceConnectionChange(newState: PeerConnection.IceConnectionState?) {
+                timber.d("onStandardizedIceConnectionChange: $newState")
+            }
+
+            override fun onAddTrack(p0: RtpReceiver?, p1: Array<out MediaStream>?) {
+                timber.d("onAddTrack: $p0 \n $p1")
+            }
+
+            override fun onTrack(transceiver: RtpTransceiver?) {
+                timber.d("onTrack: $transceiver")
+            }
+        })
     }
 
     private fun startAll() {
@@ -235,10 +265,16 @@ class RecordingViewModel @Inject constructor(
             autoRestartJob?.cancel()
             autoRestartJob = null
             durationMillisService.stop()
-            cameraService.stopRecordingAndSensors()
+            if (_state.value.isRecording) {
+                cameraService.stopRecordingAndSensors()
+            } else {
+                rtcClient.release()
+                cameraService.stopStreaming()
+            }
             updateState {
                 it.copy(
                     isRecording = false,
+                    isStreaming = false,
                     durationMillis = 0,
                     segmentCount = 0
                 )
@@ -287,7 +323,7 @@ class RecordingViewModel @Inject constructor(
             } else {
                 lastFrameLine.substring(index + 1).toLongOrNull() ?: return
             }
-            val lastImuFile = videoFile.parentFile?.parentFile?.listFiles {folder ->
+            val lastImuFile = videoFile.parentFile?.parentFile?.listFiles { folder ->
                 folder.isDirectory && folder.listFiles()?.any { file ->
                     file.name.contains("imu")
                 } == true

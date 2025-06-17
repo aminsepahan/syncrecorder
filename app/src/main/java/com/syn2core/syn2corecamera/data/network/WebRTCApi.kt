@@ -8,8 +8,15 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonIgnoreUnknownKeys
+import timber.log.Timber
+import javax.inject.Inject
 
 val httpClient = HttpClient {
     install(ContentNegotiation) {
@@ -27,11 +34,17 @@ val httpClient = HttpClient {
     }
 }
 
-class WebRTCApiService {
+class WebRTCApiService @Inject constructor() {
 
-    suspend fun getWebRtcAnswerBasedOnOffer(): String {
-        return httpClient
-            .get("https://jsonplaceholder.typicode.com/comments")
-            .body<String>()
+    suspend fun getWebRtcAnswerBasedOnOffer(offer: String, meetingId: String): Sdp {
+        val response =  httpClient
+            .post("http://10.0.2.2:4001/stream/receive_stream?uuid=$meetingId"){
+                contentType()
+                contentType(ContentType.Application.Json)
+                setBody(offer)
+            }
+            .body<Sdp>()
+        Timber.d(response.toString())
+        return response
     }
 }

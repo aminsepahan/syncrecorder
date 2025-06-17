@@ -36,8 +36,6 @@ class Camera2Recorder @Inject constructor(
     private var captureSession: CameraCaptureSession? = null
     private var outputFile: File? = null
     private var previewSurface: Surface? = null
-    var finalizeDeferred: CompletableDeferred<Unit>? = null
-        private set
 
     private val cameraHandlerThread = HandlerThread("CameraBackground").apply { start() }
     private val cameraHandler = Handler(cameraHandlerThread.looper)
@@ -84,7 +82,7 @@ class Camera2Recorder @Inject constructor(
             previewSurface,
             webRtcSurface
         ))
-        val request = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG).apply {
+        val request = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
             addTarget(previewSurface)
             addTarget(webRtcSurface)
             if (settings.autoFocus) {
@@ -106,7 +104,9 @@ class Camera2Recorder @Inject constructor(
                     timestamp: Long,
                     frameNumber: Long
                 ) {
-
+                    if (frameNumber % 100 == 0L){
+                        timber.d("$frameNumber : $timestamp")
+                    }
                 }
             },
             cameraHandler
@@ -132,31 +132,6 @@ class Camera2Recorder @Inject constructor(
             },
             cameraHandler
         )
-    }
-
-    private fun createStreamSession(surfaces: List<Surface>) {
-        cameraDevice?.createCaptureSession(
-            surfaces,
-            object : CameraCaptureSession.StateCallback() {
-                override fun onConfigured(session: CameraCaptureSession) {
-                    captureSession = session
-                    val request = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-                        .apply {
-                            surfaces.forEach {
-                                addTarget(it)
-                            }
-                        }
-                    session.setRepeatingRequest(request.build(), null, cameraHandler)
-                }
-
-                override fun onConfigureFailed(session: CameraCaptureSession) {
-                    timber.e("Preview session configuration failed")
-                }
-            },
-            cameraHandler
-        )
-        cameraDevice?.apply {
-        }
     }
 
     suspend fun startRecording(
@@ -227,8 +202,6 @@ class Camera2Recorder @Inject constructor(
             }
         } catch (e: Exception) {
             timber.e(e, "Failed to stop MediaRecorder")
-            finalizeDeferred?.completeExceptionally(e)
-            null
         }
     }
 
@@ -287,5 +260,9 @@ class Camera2Recorder @Inject constructor(
     fun stopCamera() {
         cameraDevice?.close()
         cameraDevice = null
+    }
+
+    fun stopStreaming() {
+
     }
 }

@@ -97,4 +97,10 @@ class CameraService @Inject constructor(
             settings = settings,
         )
     }
+
+    suspend fun stopStreaming() {
+        camera2Recorder.stopStreaming()
+
+        sensorService.stopSensors()
+    }
 }

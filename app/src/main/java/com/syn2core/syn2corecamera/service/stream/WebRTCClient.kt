@@ -2,41 +2,48 @@ package com.syn2core.syn2corecamera.service.stream
 
 import android.content.Context
 import android.view.Surface
-import com.syn2core.syn2corecamera.data.network.Sdp
-import kotlinx.serialization.json.Json
 import org.webrtc.DefaultVideoDecoderFactory
 import org.webrtc.DefaultVideoEncoderFactory
 import org.webrtc.EglBase
 import org.webrtc.IceCandidate
 import org.webrtc.MediaConstraints
 import org.webrtc.PeerConnection
+import org.webrtc.PeerConnection.Observer
 import org.webrtc.PeerConnectionFactory
 import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
 import org.webrtc.SurfaceTextureHelper
+import org.webrtc.VideoSource
+import org.webrtc.VideoTrack
 import timber.log.Timber
+import javax.inject.Inject
 
-class WebRTCClient(
-    observer: PeerConnection.Observer
-) {
-    private lateinit var webrtcInputSurface: Surface
+class WebRTCClient @Inject constructor() {
     private lateinit var eglBase: EglBase
     private lateinit var factory: PeerConnectionFactory
-    var remoteSessionDescription : SessionDescription? = null
+    private lateinit var observer: Observer
+    private var remoteSessionDescription : SessionDescription? = null
+    lateinit var surfaceTextureHelper: SurfaceTextureHelper
+    lateinit var videoSource: VideoSource
+    lateinit var videoTrack: VideoTrack
+    lateinit var webrtcInputSurface: Surface
 
-    private val iceServer = listOf(
+    private val iceServers = listOf(
         PeerConnection.IceServer.builder("stun:stun.l.google.com:19302")
             .createIceServer()
     )
     private val peerConnection by lazy { buildPeerConnection(observer) }
     val timber = Timber.tag("WebRTC Client")
-    fun initialize(context: Context) {
+    fun initialize(context: Context, observer: Observer) {
+        this.observer = observer
         eglBase = EglBase.create()
         val eglBaseContext = eglBase.eglBaseContext
         PeerConnectionFactory.initialize(
             PeerConnectionFactory.InitializationOptions.builder(context)
+                .setEnableInternalTracer(true)
                 .createInitializationOptions()
         )
+
 
         factory = PeerConnectionFactory.builder()
             .setVideoEncoderFactory(DefaultVideoEncoderFactory(eglBaseContext, true, true))
@@ -46,36 +53,12 @@ class WebRTCClient(
     }
 
     private fun PeerConnection.call(sdpObserver: SdpObserver, meetingID: String) {
-        val constraints = MediaConstraints().apply {
-            mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveVideo", "true"))
-        }
+        val mediaStreamLabels = listOf("ARDAMS")
+        peerConnection?.addTrack(videoTrack, mediaStreamLabels)
 
         createOffer(object : SdpObserver by sdpObserver {
             override fun onCreateSuccess(desc: SessionDescription?) {
-                setLocalDescription(object : SdpObserver {
-                    override fun onSetFailure(p0: String?) {
-                        timber.e("onSetFailure: $p0")
-                    }
-
-                    override fun onSetSuccess() {
-                        val sdp = Sdp(
-                            type = desc?.type?.name,
-                            sdp = desc?.description
-                        )
-                        val json = Json.encodeToString(sdp)
-                        timber.d("onSetSuccess $json")
-                        var remotesdp = ""
-                        onRemoteSessionReceived(SessionDescription(SessionDescription.Type.ANSWER, remotesdp))
-                    }
-
-                    override fun onCreateSuccess(p0: SessionDescription?) {
-                        timber.e("onCreateSuccess: Description $p0")
-                    }
-
-                    override fun onCreateFailure(p0: String?) {
-                        timber.e("onCreateFailure: $p0")
-                    }
-                }, desc)
+                setLocalDescription(this, desc)
                 sdpObserver.onCreateSuccess(desc)
                 timber.d("onCreateSuccess: Description $desc")
             }
@@ -87,7 +70,9 @@ class WebRTCClient(
             override fun onCreateFailure(p0: String?) {
                 timber.e("onCreateFailure: $p0")
             }
-        }, constraints)
+        }, MediaConstraints().apply {
+            optional.add(MediaConstraints.KeyValuePair("TrickleIce", "false"))
+        })
     }
 
     private fun PeerConnection.answer(sdpObserver: SdpObserver, meetingID: String) {
@@ -158,26 +143,38 @@ class WebRTCClient(
         peerConnection?.addIceCandidate(iceCandidate)
     }
 
-    private fun buildPeerConnection(observer: PeerConnection.Observer) =
+    private fun buildPeerConnection(observer: Observer) =
         factory.createPeerConnection(
-            iceServer,
+            iceServers,
             observer
         )
 
     fun createWebRTCSurface(width: Int = 720, height: Int = 480): Surface {
-        val videoSource = factory.createVideoSource(false)
-        val surfaceTextureHelper =
+        surfaceTextureHelper =
             SurfaceTextureHelper.create("CaptureThread", eglBase.eglBaseContext)
 
-        val webrtcSurfaceTexture = surfaceTextureHelper.surfaceTexture
-        webrtcSurfaceTexture.setDefaultBufferSize(720, 480)
-
+        videoSource = factory.createVideoSource(false)
         videoSource.adaptOutputFormat(width, height, 30)
-        webrtcInputSurface = Surface(webrtcSurfaceTexture)
+
+        val captureObserver = videoSource.capturerObserver
+
+        // Start listening and forward frames to WebRTC
+        surfaceTextureHelper.startListening { frame ->
+            captureObserver.onFrameCaptured(frame)
+        }
+
+        val surfaceTexture = surfaceTextureHelper.surfaceTexture
+        surfaceTexture.setDefaultBufferSize(width, height)
+        webrtcInputSurface = Surface(surfaceTexture)
+
+        // Create video track to attach to peer connection later
+        videoTrack = factory.createVideoTrack("video", videoSource)
+
         return webrtcInputSurface
     }
 
     fun release(){
         webrtcInputSurface.release()
+        peerConnection?.close()
     }
 }
