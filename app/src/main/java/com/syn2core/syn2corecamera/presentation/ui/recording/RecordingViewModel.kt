@@ -4,6 +4,7 @@ import android.view.Surface
 import androidx.lifecycle.viewModelScope
 import com.syn2core.common.ui.base.BaseViewModel
 import com.syn2core.common.ui.livedata.SingleLiveData
+import com.syn2core.syn2corecamera.BaseApplication
 import com.syn2core.syn2corecamera.TAG
 import com.syn2core.syn2corecamera.business.usecase.setting.GetRecordingSettingsUseCase
 import com.syn2core.syn2corecamera.business.usecase.setting.SetRecordingSettingsUseCase
@@ -13,6 +14,8 @@ import com.syn2core.syn2corecamera.domain.RecordingSettings
 import com.syn2core.syn2corecamera.extension.lastLine
 import com.syn2core.syn2corecamera.service.camera.CameraService
 import com.syn2core.syn2corecamera.service.durationmillis.DurationMillisService
+import com.syn2core.syn2corecamera.service.stream.PeerConnectionObserver
+import com.syn2core.syn2corecamera.service.stream.WebRTCClient
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -23,6 +26,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.webrtc.DataChannel
+import org.webrtc.IceCandidate
+import org.webrtc.MediaStream
+import org.webrtc.PeerConnection
+import org.webrtc.RtpReceiver
+import org.webrtc.RtpTransceiver
+import org.webrtc.SdpObserver
+import org.webrtc.SessionDescription
 import timber.log.Timber
 import java.io.File
 import javax.inject.Inject
@@ -42,6 +53,7 @@ class RecordingViewModel @Inject constructor(
     private val getFormattedTimeUseCase: GetFormattedTimeUseCase,
 ) : BaseViewModel<RecordingViewEvent>() {
 
+    val timber = Timber.tag("RecordingViewModel")
     private val _state = MutableStateFlow(RecordingViewState())
     val state: StateFlow<RecordingViewState> = _state.asStateFlow()
 
@@ -51,6 +63,7 @@ class RecordingViewModel @Inject constructor(
     private var autoRestartJob: Job? = null
     private var progressCheck: Job? = null
     private var segmentCount: Int = 0
+    private lateinit var rtcClient: WebRTCClient
 
     private var currentVideoFile: File? = null
 
@@ -93,13 +106,89 @@ class RecordingViewModel @Inject constructor(
                 if (_state.value.isStreaming) {
                     updateState { it.copy(isStreaming = false) }
                 } else {
+                    startStreaming()
                     updateState { it.copy(isStreaming = true) }
                 }
             }
         }
     }
 
-    fun startAll() {
+    private fun startStreaming() {
+
+        viewModelScope.launch {
+            rtcClient = WebRTCClient(
+                object : PeerConnectionObserver() {
+                    override fun onIceCandidate(p0: IceCandidate?) {
+                        super.onIceCandidate(p0)
+//                    signallingClient.sendIceCandidate(p0, isJoin)
+                        rtcClient.addIceCandidate(p0)
+                    }
+
+                    override fun onAddStream(p0: MediaStream?) {
+                        super.onAddStream(p0)
+                        timber.d("onAddStream: $p0")
+//                    p0?.videoTracks?.get(0)?.addSink(remote_view)
+                    }
+
+                    override fun onIceConnectionChange(p0: PeerConnection.IceConnectionState?) {
+                        timber.d("onIceConnectionChange: $p0")
+                    }
+
+                    override fun onIceConnectionReceivingChange(p0: Boolean) {
+                        timber.d("onIceConnectionReceivingChange: $p0")
+                    }
+
+                    override fun onConnectionChange(newState: PeerConnection.PeerConnectionState?) {
+                        timber.d("onConnectionChange: $newState")
+                    }
+
+                    override fun onDataChannel(p0: DataChannel?) {
+                        timber.d("onDataChannel: $p0")
+                    }
+
+                    override fun onStandardizedIceConnectionChange(newState: PeerConnection.IceConnectionState?) {
+                        timber.d("onStandardizedIceConnectionChange: $newState")
+                    }
+
+                    override fun onAddTrack(p0: RtpReceiver?, p1: Array<out MediaStream>?) {
+                        timber.d("onAddTrack: $p0 \n $p1")
+                    }
+
+                    override fun onTrack(transceiver: RtpTransceiver?) {
+                        timber.d("onTrack: $transceiver")
+                    }
+                }
+            )
+            rtcClient.initialize(BaseApplication.appContext)
+            val webRtcSurface = rtcClient.createWebRTCSurface()
+            cameraService.startStreaming(
+                previewSurface = cameraSurface!!,
+                webRtcSurface = webRtcSurface,
+                settings = getRecordingSettingsUseCase()
+            )
+            rtcClient.call(object : SdpObserver {
+                override fun onCreateSuccess(p0: SessionDescription?) {
+                    timber.d("onCreateSuccess p0 : $p0")
+                }
+
+                override fun onSetSuccess() {
+
+                }
+
+                override fun onCreateFailure(p0: String?) {
+
+                }
+
+                override fun onSetFailure(p0: String?) {
+
+                }
+
+            }, "12345")
+        }
+
+    }
+
+    private fun startAll() {
         viewModelScope.launch {
             val videoDirectory = "${getFormattedDateUseCase()}T${getFormattedTimeUseCase()}"
             val surface = cameraSurface
@@ -189,8 +278,8 @@ class RecordingViewModel @Inject constructor(
         currentVideoFile?.let { videoFile ->
             val lastFrameLine = videoFile.parentFile?.parentFile?.listFiles()?.maxByOrNull {
                 it.name
-            }?.listFiles {
-                it.name.contains("ft")
+            }?.listFiles { _, name ->
+                name?.contains("ft") == true
             }?.first()?.lastLine ?: return
             var index = lastFrameLine.indexOf(",")
             val lastFrameTimestamp = if (index == -1) {
@@ -198,8 +287,8 @@ class RecordingViewModel @Inject constructor(
             } else {
                 lastFrameLine.substring(index + 1).toLongOrNull() ?: return
             }
-            val lastImuFile = videoFile.parentFile?.parentFile?.listFiles {
-                it.isDirectory && it.listFiles()?.any { file ->
+            val lastImuFile = videoFile.parentFile?.parentFile?.listFiles {folder ->
+                folder.isDirectory && folder.listFiles()?.any { file ->
                     file.name.contains("imu")
                 } == true
             }?.maxByOrNull {

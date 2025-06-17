@@ -30,6 +30,7 @@ class Camera2Recorder @Inject constructor(
     private val cameraManager: CameraManager,
     private val frameFileWriter: FrameFileWriter,
 ) {
+    val timber = Timber.tag("Camera2Recorder")
     private var cameraDevice: CameraDevice? = null
     private var mediaRecorder: MediaRecorder? = null
     private var captureSession: CameraCaptureSession? = null
@@ -65,9 +66,51 @@ class Camera2Recorder @Inject constructor(
 
             override fun onError(camera: CameraDevice, error: Int) {
                 stopCamera()
-                Timber.e("Camera open error: $error")
+                timber.e("Camera open error: $error")
             }
         }, cameraHandler)
+    }
+
+    @SuppressLint("MissingPermission")
+    suspend fun startStreaming(
+        previewSurface: Surface,
+        webRtcSurface: Surface,
+        settings: RecordingSettings
+    ) {
+        this.previewSurface = null
+
+        cameraDevice = openCameraSuspending()
+        captureSession = createSessionSuspending(listOf(
+            previewSurface,
+            webRtcSurface
+        ))
+        val request = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG).apply {
+            addTarget(previewSurface)
+            addTarget(webRtcSurface)
+            if (settings.autoFocus) {
+                set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+            }
+            if (settings.stabilization) {
+                set(
+                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                )
+            }
+        }
+        captureSession?.setRepeatingRequest(
+            request.build(),
+            object : CameraCaptureSession.CaptureCallback() {
+                override fun onCaptureStarted(
+                    session: CameraCaptureSession,
+                    request: CaptureRequest,
+                    timestamp: Long,
+                    frameNumber: Long
+                ) {
+
+                }
+            },
+            cameraHandler
+        )
     }
 
     private fun createPreviewSession(surface: Surface) {
@@ -84,11 +127,36 @@ class Camera2Recorder @Inject constructor(
                 }
 
                 override fun onConfigureFailed(session: CameraCaptureSession) {
-                    Timber.e("Preview session configuration failed")
+                    timber.e("Preview session configuration failed")
                 }
             },
             cameraHandler
         )
+    }
+
+    private fun createStreamSession(surfaces: List<Surface>) {
+        cameraDevice?.createCaptureSession(
+            surfaces,
+            object : CameraCaptureSession.StateCallback() {
+                override fun onConfigured(session: CameraCaptureSession) {
+                    captureSession = session
+                    val request = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                        .apply {
+                            surfaces.forEach {
+                                addTarget(it)
+                            }
+                        }
+                    session.setRepeatingRequest(request.build(), null, cameraHandler)
+                }
+
+                override fun onConfigureFailed(session: CameraCaptureSession) {
+                    timber.e("Preview session configuration failed")
+                }
+            },
+            cameraHandler
+        )
+        cameraDevice?.apply {
+        }
     }
 
     suspend fun startRecording(
@@ -96,7 +164,6 @@ class Camera2Recorder @Inject constructor(
         outputFile: File,
         settings: RecordingSettings,
         onStartSensor: () -> Unit,
-        segmentCount: Int,
     ) {
         frameFileWriter.startNewSegment(outputFile)
 
@@ -159,7 +226,7 @@ class Camera2Recorder @Inject constructor(
                 reset()
             }
         } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Failed to stop MediaRecorder")
+            timber.e(e, "Failed to stop MediaRecorder")
             finalizeDeferred?.completeExceptionally(e)
             null
         }

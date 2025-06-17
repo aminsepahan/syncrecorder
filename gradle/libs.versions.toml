@@ -1,13 +1,13 @@
 [versions]
-agp = "8.12.0-alpha03"
+agp = "8.10.1"
 camera-core = "1.4.2"
 gson = "2.13.1"
 kotlin = "2.1.21"
 coreKtx = "1.16.0"
-lifecycleRuntimeKtx = "2.9.0"
+lifecycleRuntimeKtx = "2.9.1"
 activityCompose = "1.10.1"
-composeBom = "2025.05.01"
-appcompat = "1.7.0"
+composeBom = "2025.06.00"
+appcompat = "1.7.1"
 material = "1.12.0"
 timber = "5.0.1"
 jetbrainsKotlinJvm = "2.1.21"
@@ -23,6 +23,8 @@ workRuntimeKtx = "2.10.1"
 datastorePreferences = "1.1.7"
 uiTooling = "1.8.2"
 webRTC = "125.6422.07"
+ktor = "3.2.0"
+kotlinx-serialization-json = "1.8.1"
 
 [libraries]
 androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "camera-core" }
@@ -57,6 +59,17 @@ androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-view
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "uiTooling" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" } # core engine. Not necessary
+ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktor"} # engine that handles network requests on Android
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization-json"}
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-client-logging = {module = "io.ktor:ktor-client-logging", version.ref = "ktor"}
+
+
+[bundles]
+ktor = ["ktor-client-core", "ktor-client-android", "kotlinx-serialization-json", "ktor-client-content-negotiation",
+    "ktor-serialization-kotlinx-json","ktor-client-logging"]
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

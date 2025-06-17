@@ -61,8 +61,7 @@ class CameraService @Inject constructor(
                     imuFrequency = recordingSettings.getImuSensorDelay(),
                     currentVideoFile = currentVideoFile!!
                 )
-            },
-            segmentCount = segmentCount
+            }
         )
 
         return currentVideoFile!!
@@ -84,5 +83,18 @@ class CameraService @Inject constructor(
 
     fun stopCamera() {
         camera2Recorder.stopCamera()
+    }
+
+    suspend fun startStreaming(
+        previewSurface: Surface,
+        webRtcSurface: Surface,
+        settings: RecordingSettings
+    ) {
+
+        camera2Recorder.startStreaming(
+            previewSurface = previewSurface,
+            webRtcSurface = webRtcSurface,
+            settings = settings,
+        )
     }
 }

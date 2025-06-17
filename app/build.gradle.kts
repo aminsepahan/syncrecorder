@@ -99,12 +99,9 @@ dependencies {
     //==================== Datastore ====================
     implementation(libs.androidx.datastore.preferences)
 
-    //==================== CameraX ====================
-    implementation(libs.androidx.camera.core)
-
-    //==================== Gson ====================
-    implementation(libs.gson)
-
     //==================== WebRTC ====================
     implementation(libs.webrtc)
+
+    //==================== Ktor ====================
+    implementation(libs.bundles.ktor)
 }

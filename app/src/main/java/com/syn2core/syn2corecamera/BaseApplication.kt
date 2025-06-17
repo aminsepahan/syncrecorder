@@ -12,5 +12,10 @@ class BaseApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         Timber.plant(Timber.DebugTree())
+        appContext = this
+    }
+
+    companion object {
+        lateinit var appContext: Application private set
     }
 }
